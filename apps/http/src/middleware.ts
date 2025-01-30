@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken"
+import {JWT_SECRET} from "@repo/backend-common/config"
 
-const JWT_SECRET = process.env.JWT_SECRET || ""
 
 interface AuthTokenPayload extends JwtPayload {
     userId: string
