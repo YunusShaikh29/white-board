@@ -1,9 +1,9 @@
-import "express";
+import * as express from "express";
 
 declare global {
-    namespace Express {
-        interface Request {
-            userId?: string; // Or `number` based on your userId type
-        }
+  namespace Express {
+    interface Request {
+      userId?: string; // Use `string` if your userId is a UUID, or `number` if it's an integer
     }
+  }
 }
