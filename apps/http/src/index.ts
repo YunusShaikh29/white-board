@@ -18,7 +18,7 @@ app.use(cors());
 //@ts-ignore
 app.post("/signup", async (req, res) => {
   try {
-    // Validate request body with Zod schema
+    
     const parsedData = CreateUserSchema.safeParse(req.body);
     if (!parsedData.success) {
       return res.status(400).json({
@@ -29,23 +29,23 @@ app.post("/signup", async (req, res) => {
 
     const { email, password, name } = parsedData.data;
 
-    // Check if username already exists
+   
     const existingUser = await db.user.findUnique({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ message: "Email already taken" });
     }
 
-    // Enforce minimum password length
+    
     if (password.length < 8) {
       return res
         .status(400)
         .json({ message: "Password must be at least 8 characters long" });
     }
 
-    // Hash the password securely
+    
     const hashedPassword = await hash(password, 10);
 
-    // Create new user in the database
+    
     const user = await db.user.create({
       data: {
         email,
@@ -54,12 +54,12 @@ app.post("/signup", async (req, res) => {
       },
     });
 
-    // Generate JWT Token (Optional)
+    
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // Respond with success
+    
     res.status(201).json({
       message: "User registered successfully",
       user: { id: user.id },
@@ -166,20 +166,43 @@ app.post("/room", middleware, async (req, res) => {
   }
 });
 
-app.get("/chat/:roomId", async (req, res) => {
-    const roomId = Number(req.params.roomId)
-    const messages = await db.chat.findMany({
+app.get("/chats/:roomId", async (req, res) => {
+  try {
+      const roomId = Number(req.params.roomId);
+      const messages = await db.chat.findMany({
+          where: {
+              roomId: roomId
+          },
+          orderBy: {
+              id: "desc"
+          },
+          take: 1000
+      });
+
+      res.json({
+          messages
+      })
+  } catch(e) {
+      console.log(e);
+      res.json({
+          messages: []
+      })
+  }
+  
+})
+
+
+app.get("/room/:slug", async (req, res) => {
+  const slug = req.params.slug;
+  const room = await db.room.findFirst({
       where: {
-        roomId
-      },
-      orderBy: {
-        id: "desc"
-      },
-      take: 50
-    })
-    res.json({
-      messages
-    })
+          slug
+      }
+  });
+
+  res.json({
+      room
+  })
 })
 
 app.listen(5050, () => {

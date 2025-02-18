@@ -85,14 +85,13 @@ wss.on("connection", function connection(ws, request) {
         data: {
           message,
           userId,
-          roomId
+          roomId: +roomId
         }
       })
 
       users.forEach((user) => {
         if (user.rooms.includes(roomId)) {
           if (user.ws.readyState === WebSocket.OPEN) {
-            console.log(user.ws.readyState === WebSocket.OPEN, "line 88")
             try {
               user.ws.send(
                 JSON.stringify({
