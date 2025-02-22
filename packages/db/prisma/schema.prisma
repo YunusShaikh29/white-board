@@ -15,33 +15,77 @@ datasource db {
 
 
 model User {
-  id          String @unique @default(uuid())
-  email       String @unique  //username
-  password    String
-  name        String
-  photo       String?
-  room        Room[]
-  chats       Chat[]
+  id       String   @unique @default(uuid())
+  email    String   @unique //username
+  password String
+  name     String
+  photo    String?
+  room     Room[]
+  chats    Chat[]
 }
 
 
 model Room {
-  id            Int       @id @default(autoincrement())
-  slug          String    @unique
-  createdAt     DateTime  @default(now())
-  adminId       String
-  admin         User      @relation(fields: [adminId], references: [id])
-  chats         Chat[]
+  id        Int       @id @default(autoincrement())
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  chats     Chat[]
+  shapes    Shape[]
 }
 
 model Chat {
-  id          Int       @id @default(autoincrement())
-  message     String 
+  id      Int     @id @default(autoincrement())
+  message String
 
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
 
-  roomId      Int 
-  room        Room      @relation(fields: [roomId], references: [id])
+  roomId  Int
+  room    Room   @relation(fields: [roomId], references: [id])
 
+}
+
+enum ShapeType {
+  RECT
+  CIRCLE
+  PENCIL
+  LINE
+  ARROW
+  RHOMBUS
+  TEXT
+}
+
+model Shape {
+  id      Int        @id @default(autoincrement())
+  type    ShapeType
+  roomId  Int
+  room    Room      @relation(fields: [roomId], references: [id])
+
+  //For shapes like rectangle, rhombus and Test
+  x       Float?
+  y       Float?
+  width   Float?
+  height  Float?
+
+
+  //For circle
+  centerX Float?
+  centerY Float?
+  radius  Float?
+
+  //For line and arrow shape
+  x1 Float?
+  y1 Float?
+  x2 Float?
+  y2 Float?
+
+  // For text (x,y,w,h,content)
+  content String?
+
+  //For pencil drawing(storing an array of points as JSON)
+  points Json
+
+  createdAt DateTime @default(now())
 }
