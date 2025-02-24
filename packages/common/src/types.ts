@@ -18,7 +18,7 @@ export const CreateRoomSchema = z.object({
 /* Shapes schemas below */
 
 export const rectSchema = z.object({
-  shapeType: z.literal("rect"),
+  type: z.literal("rect"),
   x: z.number(),
   y: z.number(),
   width: z.number(),
@@ -26,14 +26,14 @@ export const rectSchema = z.object({
 });
 
 export const circleSchema = z.object({
-  shapeType: z.literal("circle"),
+  type: z.literal("circle"),
   centerX: z.number(),
   centerY: z.number(),
   radius: z.number(),
 });
 
 export const lineSchema = z.object({
-  shapeType: z.literal("line"),
+  type: z.literal("line"),
   x1: z.number(),
   y1: z.number(),
   x2: z.number(),
@@ -41,7 +41,7 @@ export const lineSchema = z.object({
 });
 
 export const arrowSchema = z.object({
-  shapeType: z.literal("arrow"),
+  type: z.literal("arrow"),
   x1: z.number(),
   y1: z.number(),
   x2: z.number(),
@@ -49,14 +49,14 @@ export const arrowSchema = z.object({
 });
 
 export const textSchema = z.object({
-  shapeType: z.literal("text"),
+  type: z.literal("text"),
   x: z.number(),
   y: z.number(),
   content: z.string(),
 });
 
 export const pencilSchem = z.object({
-  shapeType: z.literal("pencil"),
+  type: z.literal("pencil"),
   points: z.array(
     z.object({
       x: z.number(),
@@ -66,7 +66,7 @@ export const pencilSchem = z.object({
 });
 
 export const rhombusSchema = z.object({
-  shapeType: z.literal("rhombus"),
+  type: z.literal("rhombus"),
   x: z.number(),
   y: z.number(),
   width: z.number(),
@@ -74,10 +74,10 @@ export const rhombusSchema = z.object({
 });
 
 /* Discrimination union
-  discriminating based on what shapeType did we get from FE
+  discriminating based on what type did we get from FE
 */
 
-export const shapeSchema = z.discriminatedUnion("shapeType", [
+export const shapeSchema = z.discriminatedUnion("type", [
   rectSchema,
   circleSchema,
   arrowSchema,

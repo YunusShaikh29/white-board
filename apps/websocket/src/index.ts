@@ -12,7 +12,7 @@ interface User {
 
 const users: User[] = [];
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 8081 });
 
 const checkUser = (token: string): string | null => {
   try {
@@ -62,7 +62,7 @@ wss.on("connection", function connection(ws, request) {
 
       /* Joining the room */
       try {
-        if (parsedData.type === "join_room") {
+        if (parsedData.MESSAGE_TYPE === "join_room") {
           const user = users.find((user) => user.ws === ws);
           if (user) {
             user.rooms.push(parsedData.roomId);
@@ -74,7 +74,7 @@ wss.on("connection", function connection(ws, request) {
 
       /* Leaving the room */
       try {
-        if (parsedData.type === "leave_room") {
+        if (parsedData.MESSAGE_TYPE === "leave_room") {
           const user = users.find((user) => user.ws === ws);
           if (user) {
             user.rooms = user.rooms.filter(
@@ -86,50 +86,12 @@ wss.on("connection", function connection(ws, request) {
         console.log(e);
       }
 
-      /* chat */
-      try {
-        if (parsedData.type === "chat") {
-          const roomId = parsedData.roomId;
-          const message = parsedData.message;
-
-          await db.chat.create({
-            data: {
-              message,
-              userId,
-              roomId: +roomId,
-            },
-          });
-
-          users.forEach((user) => {
-            if (user.rooms.includes(roomId)) {
-              if (user.ws.readyState === WebSocket.OPEN) {
-                try {
-                  user.ws.send(
-                    JSON.stringify({
-                      type: "chat",
-                      message: message,
-                      roomId,
-                    })
-                  );
-                } catch (error) {
-                  console.error("Error sending message:", error);
-                }
-              } else {
-                console.warn(
-                  "WebSocket connection is not open:",
-                  user.ws.readyState
-                );
-              }
-            }
-          });
-        }
-      } catch (e) {
-        console.log(e);
-      }
 
       /* Shapes */
       try {
-        if (parsedData.type === "shape") {
+        if (parsedData.MESSAGE_TYPE === "shape") {
+          console.log("control reaching here")
+          console.log(parsedData.shape)
           const validatedResult = shapeSchema.safeParse(parsedData.shape);
           if (!validatedResult.success) {
             console.error("Shape validation failed", validatedResult.error);
@@ -140,11 +102,11 @@ wss.on("connection", function connection(ws, request) {
           const roomId = parsedData.roomId;
 
           let shapeData: any = {
-            type: shape.shapeType,
+            type: shape.type,
             roomId: +roomId,
           };
 
-          if (shape.shapeType === "rect" || shape.shapeType === "rhombus") {
+          if (shape.type === "rect" || shape.type === "rhombus") {
             shapeData = {
               ...shapeData,
               x: shape.x,
@@ -152,14 +114,14 @@ wss.on("connection", function connection(ws, request) {
               width: shape.width,
               height: shape.height,
             };
-          } else if (shape.shapeType === "circle") {
+          } else if (shape.type === "circle") {
             shapeData = {
               ...shapeData,
               centerX: shape.centerX,
               centerY: shape.centerY,
               radius: shape.radius,
             };
-          } else if (shape.shapeType === "arrow" || shape.shapeType === "line") {
+          } else if (shape.type === "arrow" || shape.type === "line") {
             shapeData = {
               ...shapeData,
               x1: shape.x1,
@@ -167,12 +129,12 @@ wss.on("connection", function connection(ws, request) {
               y1: shape.y1,
               y2: shape.y2,
             };
-          } else if (shape.shapeType === "pencil") {
+          } else if (shape.type === "pencil") {
             shapeData = {
               ...shapeData,
               points: shape.points,
             };
-          } else if (shape.shapeType === "text") {
+          } else if (shape.type === "text") {
             shapeData = {
               ...shapeData,
               x: shape.x,
@@ -184,7 +146,6 @@ wss.on("connection", function connection(ws, request) {
           const newShape = await db.shape.create({
             data: shapeData,
           });
-
           if (!newShape) return;
 
           /* Broadcasting shapes to everyone */
@@ -193,7 +154,7 @@ wss.on("connection", function connection(ws, request) {
               try {
                 user.ws.send(
                   JSON.stringify({
-                    type: "shape",
+                    MESSAGE_TYPE: "shape",
                     shape: newShape,
                     roomId,
                   })
