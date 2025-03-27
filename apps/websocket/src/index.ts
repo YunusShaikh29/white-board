@@ -90,8 +90,8 @@ wss.on("connection", function connection(ws, request) {
       /* Shapes */
       try {
         if (parsedData.MESSAGE_TYPE === "shape") {
-          console.log("control reaching here")
-          console.log(parsedData.shape)
+          // console.log("control reaching here")
+          // console.log(parsedData.shape)
           const validatedResult = shapeSchema.safeParse(parsedData.shape);
           if (!validatedResult.success) {
             console.error("Shape validation failed", validatedResult.error);
@@ -119,7 +119,9 @@ wss.on("connection", function connection(ws, request) {
               ...shapeData,
               centerX: shape.centerX,
               centerY: shape.centerY,
-              radius: shape.radius,
+              ...(shape.radius !== undefined && {radius: shape.radius}),
+              ...(shape.radiusX !== undefined && {radiusX: shape.radiusX}),
+              ...(shape.radiusY !== undefined && {radiusY: shape.radiusY}),
             };
           } else if (shape.type === "arrow" || shape.type === "line") {
             shapeData = {
@@ -140,6 +142,9 @@ wss.on("connection", function connection(ws, request) {
               x: shape.x,
               y: shape.y,
               content: shape.content,
+              font: shape.font,
+              fontSize: shape.fontSize,
+              color: shape.color
             };
           }
 

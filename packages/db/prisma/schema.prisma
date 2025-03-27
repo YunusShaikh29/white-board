@@ -74,6 +74,8 @@ model Shape {
   centerX   Float?
   centerY   Float?
   radius    Float?
+  radiusX   Float?
+  radiusY   Float?
 
   //For line and arrow shape
   x1        Float?
@@ -81,8 +83,11 @@ model Shape {
   x2        Float?
   y2        Float?
 
-  // For text (x,y,w,h,content)
+  // For text (x,y,w,h,content, font, fontSize, color)
   content   String?
+  font      String?
+  fontSize  Int?
+  color     String?
 
   //For pencil drawing(storing an array of points as JSON)
   points    Json?

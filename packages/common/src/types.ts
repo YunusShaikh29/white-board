@@ -25,12 +25,15 @@ export const rectSchema = z.object({
   height: z.number(),
 });
 
-export const circleSchema = z.object({
+const circleSchema = z.object({
   type: z.literal("circle"),
   centerX: z.number(),
   centerY: z.number(),
-  radius: z.number(),
-});
+  // Make these optional but at least one must be present
+  radius: z.number().optional(),
+  radiusX: z.number().optional(),
+  radiusY: z.number().optional(),
+})
 
 export const lineSchema = z.object({
   type: z.literal("line"),
@@ -53,6 +56,9 @@ export const textSchema = z.object({
   x: z.number(),
   y: z.number(),
   content: z.string(),
+  font: z.string(),
+  fontSize: z.number(),
+  color: z.string()
 });
 
 export const pencilSchem = z.object({
