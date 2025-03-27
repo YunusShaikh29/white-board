@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Shape" ADD COLUMN     "radiusX" DOUBLE PRECISION,
+ADD COLUMN     "radiusY" DOUBLE PRECISION;

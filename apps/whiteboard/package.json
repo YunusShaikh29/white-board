@@ -10,8 +10,9 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",
-    "@repo/ui": "workspace:*",
+    "@reduxjs/toolkit": "^2.6.0",
     "@repo/common": "workspace:*",
+    "@repo/ui": "workspace:*",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -22,7 +23,8 @@
     "react-dom": "^19.0.0",
     "shadcn": "^2.3.0",
     "tailwind-merge": "^3.0.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
