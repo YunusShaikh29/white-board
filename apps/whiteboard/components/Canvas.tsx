@@ -54,7 +54,6 @@ export function Canvas({
   // Initialize drawing with updated canvas dimensions
   useEffect(() => {
     if (canvasRef.current) {
-
       const canvas = canvasRef.current;
       // Set the actual canvas resolution
       canvas.width = dimensions.width;
@@ -77,9 +76,8 @@ export function Canvas({
 
   return (
     <div className="flex-1 overflow-hidden">
+      {/* Use style to ensure canvas fills its container */}
       <canvas
-        width={1000}
-        height={1000}
         ref={canvasRef}
         className="touch-none"
         style={{
