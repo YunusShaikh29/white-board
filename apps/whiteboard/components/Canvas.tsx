@@ -1,25 +1,7 @@
-// import initDraw from "@/draw";
-// import useToolStore from "@/store/toolStore";
 import { useEffect, useRef, useState } from "react";
 import { Toolbar } from "./Toolbar";
 import { Game } from "@/draw/Game";
-
-export type tool =
-  | "circle"
-  | "rect"
-  | "pencil"
-  | "clear"
-  | "erase"
-  | "undo"
-  | "redo"
-  | "hand"
-  | "point"
-  | "text"
-  | "select"
-  | "line"
-  | "arrow"
-  | "rhombus"
-  | null;
+import { Tool } from "@/util/type";
 
 export function Canvas({
   roomId,
@@ -29,20 +11,16 @@ export function Canvas({
   socket: WebSocket;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // const { currentTool } = useToolStore();
-
   const [dimensions, setDimensions] = useState<{
     width: number;
     height: number;
   }>(() => ({
-    width: typeof window !== "undefined" ? window.innerWidth : 1000,
-    height: typeof window !== "undefined" ? window.innerHeight : 1000,
+    width: window.innerWidth,
+    height: window.innerHeight,
   }));
-
-  const [selectedTool, setSelecteTool] = useState<tool>("rect");
+  const [selectedTool, setSelectedTool] = useState<Tool>("rect");
   const [game, setGame] = useState<Game>();
 
-  // Update dimensions on window resize
   useEffect(() => {
     const handleResize = () => {
       setDimensions({ width: window.innerWidth, height: window.innerHeight });
@@ -51,24 +29,20 @@ export function Canvas({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initialize drawing with updated canvas dimensions
   useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
-      // Set the actual canvas resolution
       canvas.width = dimensions.width;
       canvas.height = dimensions.height;
-      // initDraw(canvas, roomId, socket, currentTool);
-      const game = new Game(canvas, roomId, socket);
-      setGame(game);
+
+      const newGame = new Game(canvas, roomId, socket);
+      setGame(newGame);
 
       return () => {
-        game.destroy();
+        newGame.destroy();
       };
     }
   }, [canvasRef, roomId, socket, dimensions]);
-
-  console.log("SELECTED TOOL", selectedTool);
 
   useEffect(() => {
     game?.setTool(selectedTool);
@@ -76,17 +50,15 @@ export function Canvas({
 
   return (
     <div className="flex-1 overflow-hidden">
-      {/* Use style to ensure canvas fills its container */}
       <canvas
         ref={canvasRef}
         className="touch-none"
         style={{
           width: dimensions.width,
           height: dimensions.height,
-          overflow: "hidden",
         }}
-      ></canvas>
-      <Toolbar selectedTool={selectedTool} setSelectedTool={setSelecteTool} />
+      />
+      <Toolbar selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
     </div>
   );
 }

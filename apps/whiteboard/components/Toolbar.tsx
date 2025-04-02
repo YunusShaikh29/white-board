@@ -12,14 +12,14 @@ import {
   TypeOutline,
 } from "lucide-react";
 import { IconButton } from "./IconButton";
-import { tool } from "@/components/Canvas";
+import { Tool } from "@/util/type";
 
 export function Toolbar({
   selectedTool,
   setSelectedTool,
 }: {
-  selectedTool: tool;
-  setSelectedTool: (s: tool) => void;
+  selectedTool: Tool;
+  setSelectedTool: (s: Tool) => void;
 }) {
   return (
     <div className="fixed top-10 left-[50%] -translate-x-[50%] flex gap-4 items-center justify-center shadow-lg bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-90 rounded-lg px-4 py-2 text-xs font-mono">

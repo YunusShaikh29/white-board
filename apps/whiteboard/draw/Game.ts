@@ -1,59 +1,5 @@
 import { getExistingShapes } from "./http";
-import { tool } from "@/components/Canvas";
-// import { Shape } from "@/draw/index";
-
-type Point = { x: number; y: number };
-
-type Shape =
-  | {
-      type: "rect";
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }
-  | {
-      type: "circle";
-      centerX: number;
-      centerY: number;
-      radiusX: number; // Changed to support oval shapes
-      radiusY: number; // Added to support oval shapes
-    }
-  | {
-      type: "rhombus"; // diamond shape
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }
-  | {
-      type: "line";
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-    }
-  | {
-      type: "arrow";
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-    }
-  | {
-      type: "pencil";
-      points: Point[];
-    }
-  | {
-      type: "text";
-      x: number;
-      y: number;
-      content: string;
-      font: string;
-      fontSize: number;
-      color: string;
-    } | null
-
+import { Shape, Point, Tool } from "@/util/type";
 export class Game {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -63,7 +9,7 @@ export class Game {
   private drawing: boolean;
   private startX: number = 0;
   private startY: number = 0;
-  private selectedShape: tool = "rect";
+  private selectedShape: Tool = "rect";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private tempShape: any;
   private pencilPoints: Point[];
@@ -105,7 +51,7 @@ export class Game {
     };
   }
 
-  setTool(tool: tool) {
+  setTool(tool: Tool) {
     this.selectedShape = tool;
   }
 
