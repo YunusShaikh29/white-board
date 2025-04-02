@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Canvas } from "./Canvas";
-import { Tool } from "./Tools";
 
 export function RoomCanvas({ roomId }: { roomId: string }) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -50,7 +49,6 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
 
   return (
     <>
-    <Tool />
     <Canvas roomId={roomId} socket={socket} />;
     </>
   )
