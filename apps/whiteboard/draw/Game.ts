@@ -12,6 +12,7 @@ export class Game {
   private selectedShape: Tool = "rect";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private tempShape: any;
+  private hasInput: boolean = false;
   private pencilPoints: Point[];
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
@@ -141,9 +142,15 @@ export class Game {
     }
   }
 
+  drawText(shape: Shape){
+    if(shape?.type === "text"){
+        this.ctx.fillText(shape.content, shape.x, shape.y)
+    }
+  }
+
   clearCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    console.log("error in clearCanvas");
+    // console.log("error in clearCanvas");
     this.existingShapes.forEach((shape) => {
       if (!shape) return;
       switch (shape.type) {
@@ -167,7 +174,7 @@ export class Game {
           this.drawPencil(shape);
           break;
         case "text":
-          //   this.ctx.fillText(shape.content, shape.x, shape.y);
+            this.drawText(shape)
           break;
         default:
           break;
@@ -186,122 +193,180 @@ export class Game {
       this.existingShapes.push({ type: "pencil", points: this.pencilPoints });
     }
 
-    console.log(this.drawing)
-  }
+    if (this.selectedShape === "text") {
+      if (this.hasInput) return;
+
+      this.hasInput = true;
+
+      const input = document.createElement("input");
+
+      input.type = "text";
+      input.style.position = "absolute";
+      input.style.top = `${this.startY}px`;
+      input.style.left = `${this.startX}px`;
+      input.style.fontSize = "14px";
+      input.style.zIndex = "1000";
+      input.style.padding = "1em"
+      input.style.fontSize = "1rem"
+
+      document.body.appendChild(input);
+
+      input.focus();
+
+      input.addEventListener("blur", () => {
+        console.log(input.value);
+        const content = input.value;
+
+        if (content.trim().length !== 0 || content.trim() !== "") {
+          this.tempShape = {
+            type: "text",
+            x: this.startX,
+            y: this.startY,
+            content,
+            font: "sans",
+            fontSize: 14,
+            color: "#000000",
+          };
+
+          //   this.existingShapes.push(this.tempShape);
+
+          this.socket.send(
+            JSON.stringify({
+              MESSAGE_TYPE: "shape",
+              shape: this.tempShape,
+              roomId: this.roomId,
+            })
+          );
+          this.clearCanvas();
+          document.body.removeChild(input);
+
+          this.hasInput = false;
+        }
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      input.addEventListener("keydown", (event: any) => {
+        if (event.key === "Enter") {
+          input.blur();
+        }
+      });
+    }
+
+    console.log(this.drawing);
+  };
 
   mouseMoveHandler = (e: MouseEvent) => {
     // console.log(this.drawing)
     if (this.drawing) {
+      console.log("control reached here | mouse_MOVE", this.drawing);
 
-        console.log("control reached here | mouse_MOVE", this.drawing);
-    
-        const currentX = e.clientX;
-        const currentY = e.clientY;
-        // let tempShape = {};
-        // Clear and redraw existing shapes
-        this.clearCanvas();
-    
-        // Use the activeTool that was captured when drawing started
-        // console.log("ERROR IN MOUSEMOVEHANDLER", this.mouseMoveHandler);
-        switch (this.selectedShape) {
-          case "rect": {
-            const width = currentX - this.startX;
-            const height = currentY - this.startY;
-            this.ctx.strokeRect(this.startX, this.startY, width, height);
-            this.tempShape = {
-              type: "rect",
-              x: this.startX,
-              y: this.startY,
-              width,
-              height,
-            };
-            break;
-          }
-          case "circle": {
-            // Support oval shapes like Excalidraw
-            const radiusX = Math.abs(currentX - this.startX);
-            const radiusY = Math.abs(currentY - this.startY);
-    
-            this.ctx.beginPath();
-            this.ctx.ellipse(
-              this.startX,
-              this.startY,
-              radiusX,
-              radiusY,
-              0,
-              0,
-              2 * Math.PI
-            );
-            this.ctx.stroke();
-    
-            this.tempShape = {
-              type: "circle",
-              centerX: this.startX,
-              centerY: this.startY,
-              radiusX,
-              radiusY,
-            };
-            break;
-          }
-          case "rhombus": {
-            const width = currentX - this.startX;
-            const height = currentY - this.startY;
-            const centerX = this.startX + width / 2;
-            const centerY = this.startY + height / 2;
-            this.ctx.beginPath();
-            this.ctx.moveTo(centerX, this.startY); // top
-            this.ctx.lineTo(currentX, centerY); // right
-            this.ctx.lineTo(centerX, currentY); // bottom
-            this.ctx.lineTo(this.startX, centerY); // left
-            this.ctx.closePath();
-            this.ctx.stroke();
-            this.tempShape = {
-              type: "rhombus",
-              x: this.startX,
-              y: this.startY,
-              width,
-              height,
-            };
-            break;
-          }
-          case "line": {
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.startX, this.startY);
-            this.ctx.lineTo(currentX, currentY);
-            this.ctx.stroke();
-            this.tempShape = {
-              type: "line",
-              x1: this.startX,
-              y1: this.startY,
-              x2: currentX,
-              y2: currentY,
-            };
-            break;
-          }
-          case "arrow": {
-            this.tempShape = {
-              type: "arrow",
-              x1: this.startX,
-              y1: this.startY,
-              x2: currentX,
-              y2: currentY,
-            };
-            this.drawArrow(this.tempShape);
-            break;
-          }
-          case "pencil": {
-            this.pencilPoints.push({ x: currentX, y: currentY });
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.pencilPoints[0].x, this.pencilPoints[0].y);
-            this.pencilPoints.forEach((pt) => this.ctx.lineTo(pt.x, pt.y));
-            this.ctx.stroke();
-            this.tempShape = { type: "pencil", points: [...this.pencilPoints] };
-            break;
-          }
-          // text case is handled in moveDown handler
-          default:
-            this.tempShape = {};
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+      // let tempShape = {};
+      // Clear and redraw existing shapes
+      this.clearCanvas();
+
+      // Use the activeTool that was captured when drawing started
+      // console.log("ERROR IN MOUSEMOVEHANDLER", this.mouseMoveHandler);
+      switch (this.selectedShape) {
+        case "rect": {
+          const width = currentX - this.startX;
+          const height = currentY - this.startY;
+          this.ctx.strokeRect(this.startX, this.startY, width, height);
+          this.tempShape = {
+            type: "rect",
+            x: this.startX,
+            y: this.startY,
+            width,
+            height,
+          };
+          break;
         }
+        case "circle": {
+          // Support oval shapes like Excalidraw
+          const radiusX = Math.abs(currentX - this.startX);
+          const radiusY = Math.abs(currentY - this.startY);
+
+          this.ctx.beginPath();
+          this.ctx.ellipse(
+            this.startX,
+            this.startY,
+            radiusX,
+            radiusY,
+            0,
+            0,
+            2 * Math.PI
+          );
+          this.ctx.stroke();
+
+          this.tempShape = {
+            type: "circle",
+            centerX: this.startX,
+            centerY: this.startY,
+            radiusX,
+            radiusY,
+          };
+          break;
+        }
+        case "rhombus": {
+          const width = currentX - this.startX;
+          const height = currentY - this.startY;
+          const centerX = this.startX + width / 2;
+          const centerY = this.startY + height / 2;
+          this.ctx.beginPath();
+          this.ctx.moveTo(centerX, this.startY); // top
+          this.ctx.lineTo(currentX, centerY); // right
+          this.ctx.lineTo(centerX, currentY); // bottom
+          this.ctx.lineTo(this.startX, centerY); // left
+          this.ctx.closePath();
+          this.ctx.stroke();
+          this.tempShape = {
+            type: "rhombus",
+            x: this.startX,
+            y: this.startY,
+            width,
+            height,
+          };
+          break;
+        }
+        case "line": {
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.startX, this.startY);
+          this.ctx.lineTo(currentX, currentY);
+          this.ctx.stroke();
+          this.tempShape = {
+            type: "line",
+            x1: this.startX,
+            y1: this.startY,
+            x2: currentX,
+            y2: currentY,
+          };
+          break;
+        }
+        case "arrow": {
+          this.tempShape = {
+            type: "arrow",
+            x1: this.startX,
+            y1: this.startY,
+            x2: currentX,
+            y2: currentY,
+          };
+          this.drawArrow(this.tempShape);
+          break;
+        }
+        case "pencil": {
+          this.pencilPoints.push({ x: currentX, y: currentY });
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.pencilPoints[0].x, this.pencilPoints[0].y);
+          this.pencilPoints.forEach((pt) => this.ctx.lineTo(pt.x, pt.y));
+          this.ctx.stroke();
+          this.tempShape = { type: "pencil", points: [...this.pencilPoints] };
+          break;
+        }
+        // text case is handled in moveDown handler
+        default:
+          this.tempShape = {};
+      }
     }
   };
 
@@ -310,7 +375,7 @@ export class Game {
     console.log("control reached here | mouse_UP");
     // console.log(this.drawing)
     this.drawing = false;
-    console.log(this.tempShape)
+    console.log(this.tempShape);
     if (this.tempShape) {
       this.existingShapes.push(this.tempShape);
       this.clearCanvas();
