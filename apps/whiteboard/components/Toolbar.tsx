@@ -17,6 +17,8 @@ import { Tool } from "@/util/type";
 export function Toolbar({
   selectedTool,
   setSelectedTool,
+  selectedColor,
+  setSelectedColor
 }: {
   selectedTool: Tool;
   setSelectedTool: (s: Tool) => void;

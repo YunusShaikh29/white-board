@@ -67,3 +67,28 @@ export type Shape =
       color: string;
     }
   | null;
+
+export type Theme = "rgb(24,24,27)" | "rgb(255,255,255)";
+
+export type Color =
+  | "#000000"
+  | "#7a7a7a"
+  | "#ffa6a6"
+  | "#a6ffa6"
+  | "#a6a6ff"
+  | "#ffffa6"
+  | "#ffa6ff"
+  | "#a6ffff"
+  | "#ffffff";
+
+export const colors: Color[] = [
+  "#000000",
+  "#7a7a7a", // Black
+  "#ffa6a6", // Red
+  "#a6ffa6", // Green
+  "#a6a6ff", // Blue
+  "#ffffa6", // Yellow
+  "#ffa6ff", // Magenta
+  "#a6ffff", // Cyan
+  "#ffffff", // White
+];

@@ -1,5 +1,5 @@
 import { getExistingShapes } from "./http";
-import { Shape, Point, Tool } from "@/util/type";
+import { Shape, Point, Tool, Color, Theme } from "@/util/type";
 export class Game {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -10,6 +10,8 @@ export class Game {
   private startX: number = 0;
   private startY: number = 0;
   private selectedShape: Tool = "rect";
+  private selecteColor: Color = "#000000";
+  private theme: Theme = "rgb(24,24,27)";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private tempShape: any;
   private hasInput: boolean = false;
@@ -56,14 +58,62 @@ export class Game {
     this.selectedShape = tool;
   }
 
+  setColor(color: Color) {
+    // Adjust color based on theme
+    if (
+      this.theme === "rgb(24,24,27)" &&
+      (color === "#000000" || color === "#7a7a7a")
+    ) {
+      this.selecteColor = "#ffffff";
+    } else if (this.theme === "rgb(255,255,255)" && color === "#ffffff") {
+      this.selecteColor = "#000000";
+    } else {
+      this.selecteColor = color;
+    }
+
+    this.ctx.strokeStyle = this.selecteColor;
+  }
+
+  setTheme(theme: Theme) {
+    this.theme = theme;
+
+    // Adjust current color based on new theme
+    if (
+      theme === "rgb(24,24,27)" &&
+      (this.selecteColor === "#000000" || this.selecteColor === "#7a7a7a")
+    ) {
+      this.selecteColor = "#ffffff";
+    } else if (
+      theme === "rgb(255,255,255)" &&
+      this.selecteColor === "#ffffff"
+    ) {
+      this.selecteColor = "#000000";
+    }
+
+    this.ctx.strokeStyle = this.selecteColor;
+    this.clearCanvas();
+  }
+
+  drawText(shape: Shape) {
+    if (shape?.type === "text") {
+      this.ctx.font = "14px Arial";
+      // Set text color based on theme
+      this.ctx.fillStyle =
+        this.theme === "rgb(24,24,27)" ? "#ffffff" : "#000000";
+      this.ctx.fillText(shape.content, shape.x, shape.y);
+    }
+  }
+
   drawRect(shape: Shape) {
     if (shape?.type === "rect") {
+      this.ctx.strokeStyle = this.selecteColor;
       this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
     }
   }
 
   drawCircle(shape: Shape) {
     if (shape?.type === "circle") {
+      this.ctx.strokeStyle = this.selecteColor.toString();
       this.ctx.beginPath();
       // Handle both old and new circle formats
       if ("radiusX" in shape && "radiusY" in shape) {
@@ -84,6 +134,7 @@ export class Game {
 
   drawRhombus(shape: Shape) {
     if (shape?.type === "rhombus") {
+      this.ctx.strokeStyle = this.selecteColor.toString();
       const centerX = shape.x + shape.width / 2;
       const centerY = shape.y + shape.height / 2;
       this.ctx.beginPath();
@@ -98,6 +149,7 @@ export class Game {
 
   drawLine(shape: Shape) {
     if (shape?.type === "line") {
+      this.ctx.strokeStyle = this.selecteColor.toString();
       this.ctx.beginPath();
       this.ctx.moveTo(shape.x1, shape.y1);
       this.ctx.lineTo(shape.x2, shape.y2);
@@ -107,6 +159,7 @@ export class Game {
 
   drawArrow(shape: Shape) {
     if (shape?.type === "arrow") {
+      this.ctx.strokeStyle = this.selecteColor.toString();
       const headLength = 10;
       const angle = Math.atan2(shape.y2 - shape.y1, shape.x2 - shape.x1);
 
@@ -134,6 +187,7 @@ export class Game {
   drawPencil(shape: Shape) {
     if (shape?.type === "pencil") {
       if (shape.points && shape.points.length > 0) {
+        this.ctx.strokeStyle = this.selecteColor.toString();
         this.ctx.beginPath();
         this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
         shape.points.forEach((pt) => this.ctx.lineTo(pt.x, pt.y));
@@ -142,17 +196,25 @@ export class Game {
     }
   }
 
-  drawText(shape: Shape){
-    if(shape?.type === "text"){
-        this.ctx.fillText(shape.content, shape.x, shape.y)
-    }
-  }
+  // drawText(shape: Shape) {
+  //   if (shape?.type === "text") {
+  //     this.ctx.font = "14px Arial"; // Customize font as needed
+  //     this.ctx.fillStyle = this.theme.toString();
+  //     this.ctx.strokeStyle = this.selecteColor.toString();
+  //     this.ctx.fillText(shape.content, shape.x, shape.y);
+  //   }
+  // }
 
   clearCanvas() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    // console.log("error in clearCanvas");
+    this.ctx.fillStyle = this.theme;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
     this.existingShapes.forEach((shape) => {
       if (!shape) return;
+
+      this.ctx.strokeStyle =
+        this.theme === "rgb(24,24,27)" ? "#ffffff" : "#000000";
+
       switch (shape.type) {
         case "rect":
           this.drawRect(shape);
@@ -160,10 +222,9 @@ export class Game {
         case "circle":
           this.drawCircle(shape);
           break;
-        case "rhombus": {
+        case "rhombus":
           this.drawRhombus(shape);
           break;
-        }
         case "line":
           this.drawLine(shape);
           break;
@@ -174,7 +235,7 @@ export class Game {
           this.drawPencil(shape);
           break;
         case "text":
-            this.drawText(shape)
+          this.drawText(shape);
           break;
         default:
           break;
@@ -194,6 +255,9 @@ export class Game {
     }
 
     if (this.selectedShape === "text") {
+      const canvasRect = this.canvas.getBoundingClientRect();
+      const canvasX = e.clientX - canvasRect.left;
+      const canvasY = e.clientY - canvasRect.top;
       if (this.hasInput) return;
 
       this.hasInput = true;
@@ -202,12 +266,12 @@ export class Game {
 
       input.type = "text";
       input.style.position = "absolute";
-      input.style.top = `${this.startY}px`;
-      input.style.left = `${this.startX}px`;
+      input.style.top = `${canvasY}px`;
+      input.style.left = `${canvasX}px`;
       input.style.fontSize = "14px";
       input.style.zIndex = "1000";
-      input.style.padding = "1em"
-      input.style.fontSize = "1rem"
+      input.style.padding = "1em";
+      input.style.fontSize = "1rem";
 
       document.body.appendChild(input);
 
@@ -220,8 +284,8 @@ export class Game {
         if (content.trim().length !== 0 || content.trim() !== "") {
           this.tempShape = {
             type: "text",
-            x: this.startX,
-            y: this.startY,
+            x: canvasX,
+            y: canvasY,
             content,
             font: "sans",
             fontSize: 14,
