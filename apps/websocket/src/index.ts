@@ -15,6 +15,10 @@ const users: User[] = [];
 const wss = new WebSocketServer({ port: 8081 });
 
 const checkUser = (token: string): string | null => {
+  if (!token) {
+    return null;
+  }
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
@@ -36,11 +40,17 @@ const checkUser = (token: string): string | null => {
 wss.on("connection", function connection(ws, request) {
   const url = request.url;
   if (!url) {
+    ws.close();
     return;
   }
 
   const queryParams = new URLSearchParams(url.split("?")[1]);
-  const token = queryParams.get("token") || "";
+  const token = queryParams.get("token");
+  if (!token) {
+    ws.close();
+    return;
+  }
+
   const userId = checkUser(token);
 
   if (!userId) {
@@ -89,6 +99,68 @@ wss.on("connection", function connection(ws, request) {
 
       /* Shapes */
       try {
+        // Handle shape deletion
+        if (parsedData.MESSAGE_TYPE === "delete_shape") {
+          const shapeId = parsedData.shapeId;
+          const roomId = parsedData.roomId;
+          if (!shapeId || !roomId) return;
+          try {
+            try {
+              const response = await require('axios').default.delete(`http://localhost:5050/shapes/${Number(shapeId)}`);
+              console.log(`Shape ${shapeId} deleted from DB. Response:`, response.data);
+            } catch (err) {
+              console.error("Failed to delete shape from DB", (err as any)?.response?.data || err);
+              return;
+            }
+          } catch (err) {
+            console.error("Failed to delete shape from DB", err);
+            return;
+          }
+          // Broadcast deletion to all clients in the room
+          users.forEach((user) => {
+            if (user.rooms.includes(roomId)) {
+              try {
+                user.ws.send(
+                  JSON.stringify({
+                    MESSAGE_TYPE: "delete_shape",
+                    shapeId,
+                    roomId,
+                  })
+                );
+              } catch (e) {
+                console.log("error sending shape deletion", e);
+              }
+            }
+          });
+          return;
+        }
+
+        // Handle eraser (bulk delete)
+        if (parsedData.MESSAGE_TYPE === "erase" && parsedData.shapeIds) {
+          // Broadcast erase event to all clients in the room
+          console.log("Erasing shapes with IDs:", parsedData.shapeIds);
+          users.forEach(user => {
+            if (user.rooms.includes(parsedData.roomId)) {
+              user.ws.send(JSON.stringify({
+                MESSAGE_TYPE: "erase",
+                shapeIds: parsedData.shapeIds,
+                roomId: parsedData.roomId,
+              }));
+            }
+          });
+        
+          // Delete shapes from the database
+          try {
+            await db.shape.deleteMany({
+              where: {
+                id: { in: parsedData.shapeIds },
+                roomId: parsedData.roomId
+              }
+            });
+          } catch (error) {
+            console.error("Error deleting shapes from database:", error);
+          }
+        }
         if (parsedData.MESSAGE_TYPE === "shape") {
           // console.log("control reaching here")
           // console.log(parsedData.shape)

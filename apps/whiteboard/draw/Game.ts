@@ -4,7 +4,7 @@ export class Game {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private existingShapes: Shape[];
-  private roomId: string;
+  private roomId: number;
   private socket: WebSocket;
   private drawing: boolean;
   private startX: number = 0;
@@ -14,10 +14,27 @@ export class Game {
   private theme: Theme = "rgb(24,24,27)";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private tempShape: any;
+  private _selectedShape: Tool | null;
   private hasInput: boolean = false;
   private pencilPoints: Point[];
 
-  constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
+  constructor(canvas: HTMLCanvasElement, roomId: number, socket: WebSocket) {
+    // ...existing code...
+    // Set up eraser cursor when tool is erase
+    Object.defineProperty(this, 'selectedShape', {
+      set: (tool: Tool) => {
+        this._selectedShape = tool;
+        if (tool === 'erase' || tool === "line" || tool === "arrow") {
+          this.canvas.style.cursor = 'crosshair';
+        } else {
+          this.canvas.style.cursor = 'default';
+        }
+      },
+      get: () => this._selectedShape,
+      configurable: true
+    });
+    this._selectedShape = null;
+
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.existingShapes = [];
@@ -51,11 +68,85 @@ export class Game {
         this.existingShapes.push(data.shape);
         this.clearCanvas();
       }
+      if (data.MESSAGE_TYPE === "erase" && data.shapeIds) {
+        this.existingShapes = this.existingShapes.filter(
+          shape => !data.shapeIds.includes(shape?.id || -1)
+        );
+        this.clearCanvas();
+      }
     };
   }
 
   setTool(tool: Tool) {
     this.selectedShape = tool;
+  }
+
+  eraseAt(x: number, y: number) {
+    const eraserRadius = 20;
+    const erasedShapeIds: number[] = [];
+    this.existingShapes = this.existingShapes.filter(shape => {
+      const hit = this.shapeIntersectsEraser(shape, x, y, eraserRadius);
+      if (hit && shape?.id) {
+        erasedShapeIds.push(shape.id);
+      }
+      return !hit;
+    });
+  
+    if (erasedShapeIds.length > 0) {
+      this.clearCanvas();
+      this.socket.send(
+        JSON.stringify({
+          MESSAGE_TYPE: "erase",
+          shapeIds: erasedShapeIds,
+          roomId: this.roomId,
+        })
+      );
+    }
+  }
+
+  shapeIntersectsEraser(shape: any, x: number, y: number, radius: number) {
+    // Rect
+    if (shape.type === "rect") {
+      return (
+        x + radius > shape.x &&
+        x - radius < shape.x + shape.width &&
+        y + radius > shape.y &&
+        y - radius < shape.y + shape.height
+      );
+    }
+    // Circle
+    if (shape.type === "circle") {
+      const dx = x - shape.centerX;
+      const dy = y - shape.centerY;
+      return Math.sqrt(dx * dx + dy * dy) < (shape.radiusX || shape.radius) + radius;
+    }
+    // Line/Arrow
+    if (shape.type === "line" || shape.type === "arrow") {
+      const dist = this.pointToSegmentDistance(x, y, shape.x1, shape.y1, shape.x2, shape.y2);
+      return dist < radius;
+    }
+    // Pencil
+    if (shape.type === "pencil" && Array.isArray(shape.points)) {
+      return shape.points.some(pt => Math.hypot(pt.x - x, pt.y - y) < radius);
+    }
+    // Text
+    if (shape.type === "text") {
+      return (
+        x + radius > shape.x &&
+        x - radius < shape.x + (shape.width || 50) &&
+        y + radius > shape.y - (shape.fontSize || 16) &&
+        y - radius < shape.y
+      );
+    }
+    return false;
+  }
+
+  pointToSegmentDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
+    const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+    if (l2 === 0) return Math.hypot(px - x1, py - y1);
+    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
   }
 
   setColor(color: Color) {
@@ -244,6 +335,11 @@ export class Game {
   }
 
   mouseDownHandler = (e: MouseEvent) => {
+    if (this.selectedShape === "erase") {
+      this.drawing = true;
+      this.eraseAt(e.offsetX, e.offsetY);
+      return;
+    }
     console.log("control reached here, mouse_DOWN");
     this.drawing = true;
     this.startX = e.clientX;
@@ -320,6 +416,10 @@ export class Game {
   };
 
   mouseMoveHandler = (e: MouseEvent) => {
+    if (this.selectedShape === "erase" && this.drawing) {
+      this.eraseAt(e.offsetX, e.offsetY);
+      return;
+    }
     // console.log(this.drawing)
     if (this.drawing) {
       console.log("control reached here | mouse_MOVE", this.drawing);
@@ -436,6 +536,10 @@ export class Game {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   mouseUpHandler = (e: MouseEvent) => {
+    if (this.selectedShape === "erase") {
+      this.drawing = false;
+      return;
+    }
     console.log("control reached here | mouse_UP");
     // console.log(this.drawing)
     this.drawing = false;
