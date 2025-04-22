@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export async function getExistingShapes(roomId: string) {
+export async function getExistingShapes(roomId: number) {
     const res = await axios.get(
       `${process.env.NEXT_PUBLIC_HTTP_BACKEND}/shapes/${roomId}`
     );

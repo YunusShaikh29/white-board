@@ -256,6 +256,25 @@ app.get("/shapes/:roomId", async (req, res) => {
   }
 });
 
+app.get("/rooms", middleware, async (req, res) => {
+  try {
+    const userId = req?.userId;
+    const rooms = await db.room.findMany({
+      where: {
+        adminId: userId as string
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(rooms);
+  } catch (error) {
+    console.error('Error fetching rooms:', error);
+    res.status(500).json({ message: 'Failed to fetch rooms' });
+  }
+});
+
 app.get("/room/:slug", async (req, res) => {
   const slug = req.params.slug;
   const room = await db.room.findFirst({
@@ -267,6 +286,68 @@ app.get("/room/:slug", async (req, res) => {
   res.json({
     room,
   });
+});
+
+app.delete("/rooms/:roomId", middleware, async (req, res) => {
+  try {
+    const roomId = Number(req.params.roomId);
+    const userId = req?.userId;
+
+    // Check if room exists and belongs to the user
+    const room = await db.room.findFirst({
+      where: {
+        id: roomId,
+        adminId: userId as string
+      }
+    });
+
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found or unauthorized' });
+    }
+
+    // Delete the room
+    await db.room.delete({
+      where: {
+        id: roomId
+      }
+    });
+
+    res.json({ message: 'Room deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting room:', error);
+    res.status(500).json({ message: 'Failed to delete room' });
+  }
+});
+
+app.delete("/shapes/:shapeId", middleware, async (req, res) => {
+  try {
+    const shapeId = Number(req.params.shapeId);
+    // Optionally, check if user has permission to delete shape
+    console.log("Deleting shape with ID:", shapeId);
+    await db.shape.delete({
+      where: { id: shapeId }
+    });
+    res.json({ message: "Shape deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete shape" });
+  }
+});
+
+// Bulk delete shapes
+app.delete("/shapes/bulk", middleware, async (req, res) => {
+  try {
+    const { shapeIds } = req.body;
+    if (!Array.isArray(shapeIds) || shapeIds.some(id => typeof id !== "number")) {
+      return res.status(400).json({ message: "Invalid shapeIds" });
+    }
+    console.log("Deleting shapes with IDs:", shapeIds);
+    await db.shape.deleteMany({
+      where: { id: { in: shapeIds } }
+    });
+    res.json({ message: "Shapes deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete shapes" });
+  }
 });
 
 app.listen(5050, () => {

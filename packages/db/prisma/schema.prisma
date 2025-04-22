@@ -61,7 +61,7 @@ model Shape {
   id        Int        @id @default(autoincrement())
   type      ShapeType
   roomId    Int
-  room      Room      @relation(fields: [roomId], references: [id])
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   //For shapes like rectangle, rhombus and Test
   x         Float?

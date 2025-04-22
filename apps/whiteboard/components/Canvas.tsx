@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { useTheme } from "@/context/ThemeContext";
 import { Toolbar } from "./Toolbar";
 import { Game } from "@/draw/Game";
 import { Tool, Theme, Color } from "@/util/type";
@@ -9,7 +11,7 @@ export function Canvas({
   roomId,
   socket,
 }: {
-  roomId: string;
+  roomId: number;
   socket: WebSocket;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,7 +26,7 @@ export function Canvas({
   const [selectedTool, setSelectedTool] = useState<Tool>("rect");
   const [game, setGame] = useState<Game>();
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [theme, setTheme] = useState<Theme>("rgb(24,24,27)");
+  const { theme, toggleTheme } = useTheme();
   const [selectedColor, setSelectedColor] = useState<Color>("#ffffff");
 
   useEffect(() => {
@@ -59,6 +61,7 @@ export function Canvas({
 
   return (
     <div className="flex-1 overflow-hidden relative">
+
       <canvas
         ref={canvasRef}
         className={`touch-none ${
@@ -69,11 +72,11 @@ export function Canvas({
       <Toolbar selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
       <button
         onClick={() => setSidebarVisible((prev) => !prev)}
-        className={`fixed top-16 left-16 p-2 rounded-md ${
-          theme === "rgb(24,24,27)" 
-            ? "bg-zinc-700 text-white" 
-            : "bg-gray-200 text-gray-700"
-        } shadow-md z-40`}
+        className={`fixed top-6 left-6 z-40 flex items-center justify-center w-12 h-12 rounded-full border transition-colors
+          ${theme === "rgb(24,24,27)" 
+            ? "bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 hover:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+            : "bg-white border-gray-200 text-gray-700 hover:bg-indigo-50 hover:border-indigo-400 focus:ring-2 focus:ring-indigo-400"}
+        `}
         title="Open Settings"
       >
         <AlignJustify size={20} />
@@ -82,8 +85,6 @@ export function Canvas({
         <Sidebar
           selectedColor={selectedColor}
           setSelectedColor={setSelectedColor}
-          theme={theme}
-          setTheme={setTheme}
           onClose={() => setSidebarVisible(false)}
         />
       )}

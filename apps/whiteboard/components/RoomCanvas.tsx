@@ -2,12 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { Canvas } from "./Canvas";
+import { getStoredToken } from "../services/auth";
+import { useRouter } from "next/navigation";
 
-export function RoomCanvas({ roomId }: { roomId: string }) {
+export default function RoomCanvas({ roomId }: { roomId: number }) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyOThiNjNkNi0yZWZlLTQ5M2QtODEzYy0xZGU3YTNkYzNlMTUiLCJpYXQiOjE3NDM3OTY3NTUsImV4cCI6MTc0NDA1NTk1NX0.W7JN6Ag7C93jKny07UIsCL2d1eKfk03viOGVq5A3lEc`);
+    const token = getStoredToken();
+    if (!token) {
+      router.push('/signin');
+      return;
+    }
+    const ws = new WebSocket(
+      `${process.env.NEXT_PUBLIC_WS_URL}?token=${token}`
+    );
 
     ws.onopen = () => {
       setSocket(ws);
@@ -47,7 +57,7 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
 
   return (
     <>
-      <Canvas roomId={roomId} socket={socket} />;
+      <Canvas roomId={roomId} socket={socket} />
     </>
   );
 }

@@ -4,9 +4,18 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
 import { PencilRuler, Eraser, Shapes, Share2 } from "lucide-react";
+import { signIn, signUp } from "../services/auth";
+import { toast } from "sonner";
 
 const AuthPage = ({ signin }: { signin: boolean }) => {
   const [isSignIn, setIsSignIn] = useState(signin);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
   const router = useRouter();
 
   const toggleMode = () => {
@@ -32,23 +41,59 @@ const AuthPage = ({ signin }: { signin: boolean }) => {
               : "Create an account to start collaborating"}
           </p>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={async (e) => {
+            e.preventDefault();
+            setLoading(true);
+            try {
+              if (isSignIn) {
+                await signIn({
+                  email: formData.email,
+                  password: formData.password
+                });
+                toast.success('Signed in successfully!');
+                router.push('/rooms');
+              } else {
+                if (formData.password !== formData.confirmPassword) {
+                  toast.error('Passwords do not match');
+                  return;
+                }
+                await signUp({
+                  name: formData.name,
+                  email: formData.email,
+                  password: formData.password
+                });
+                toast.success('Account created successfully!');
+                router.push('/rooms');
+              }
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : 'Authentication failed');
+            } finally {
+              setLoading(false);
+            }
+          }}>
             {!isSignIn && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
-                  Username
+                  Name
                 </label>
                 <Input
-                  placeholder="Enter your username"
+                  placeholder="Enter your name"
                   className="border-gray-200 focus:ring-purple-500 focus:border-purple-500"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
                 />
               </div>
             )}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Email</label>
               <Input
+                type="email"
                 placeholder="Enter your email"
                 className="border-gray-200 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -59,6 +104,10 @@ const AuthPage = ({ signin }: { signin: boolean }) => {
                 type="password"
                 placeholder="Enter your password"
                 className="border-gray-200 focus:ring-purple-500 focus:border-purple-500"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                minLength={6}
               />
             </div>
             {!isSignIn && (
@@ -70,12 +119,17 @@ const AuthPage = ({ signin }: { signin: boolean }) => {
                   type="password"
                   placeholder="Confirm your password"
                   className="border-gray-200 focus:ring-purple-500 focus:border-purple-500"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  required
+                  minLength={6}
                 />
               </div>
             )}
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white"
+              disabled={loading}
             >
               {isSignIn ? "Sign In" : "Create Account"}
             </Button>
