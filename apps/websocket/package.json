@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -b",
-    "start": "tsx watch src/index.ts",
-    "dev": "pnpm run build && pnpm run start"
+    "dev": "tsx watch src/index.ts",
+    "start": "pnpm run build && node dist/index.js"
   },
   "type": "module",
   "dependencies": {

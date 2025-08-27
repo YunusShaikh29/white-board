@@ -61,7 +61,7 @@ export const textSchema = z.object({
   color: z.string()
 });
 
-export const pencilSchem = z.object({
+export const pencilSchema = z.object({
   type: z.literal("pencil"),
   points: z.array(
     z.object({
@@ -88,7 +88,66 @@ export const shapeSchema = z.discriminatedUnion("type", [
   circleSchema,
   arrowSchema,
   lineSchema,
-  pencilSchem,
+  pencilSchema,
   textSchema,
   rhombusSchema,
 ]);
+
+// Update Shape type to include optional id in each variant
+export type Shape =
+  | {
+      type: "rect";
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      id?: number;
+    }
+  | {
+      type: "circle";
+      centerX: number;
+      centerY: number;
+      radiusX: number;
+      radiusY: number;
+      id?: number;
+    }
+  | {
+      type: "rhombus";
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      id?: number;
+    }
+  | {
+      type: "line";
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      id?: number;
+    }
+  | {
+      type: "arrow";
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      id?: number;
+    }
+  | {
+      type: "pencil";
+      points: Point[];
+      id?: number;
+    }
+  | {
+      type: "text";
+      x: number;
+      y: number;
+      content: string;
+      font: string;
+      fontSize: number;
+      color: string;
+      id?: number;
+    }
+  | null;

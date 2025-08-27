@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, PlusCircle, Loader2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { Room, createRoom, getRooms, deleteRoom } from "@/services/rooms";
 import { getStoredToken } from "@/services/auth";
@@ -12,7 +12,6 @@ import { Moon, Sun, LogOut } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { PlusCircle, Loader2 } from "lucide-react";
 
 export default function RoomsPage() {
   const { theme, isDarkMode, toggleTheme } = useTheme();
@@ -23,6 +22,7 @@ export default function RoomsPage() {
   const [creating, setCreating] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const router = useRouter();
+  const MAX_ROOMS = 5;
 
   useEffect(() => {
     const token = getStoredToken();
@@ -67,6 +67,12 @@ export default function RoomsPage() {
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoomName.trim()) return;
+    
+    // Check room limit on frontend
+    if (rooms.length >= MAX_ROOMS) {
+      toast.error(`You can only create ${MAX_ROOMS} rooms. Upgrade to premium for unlimited rooms.`);
+      return;
+    }
 
     setCreating(true);
     try {
@@ -125,30 +131,53 @@ export default function RoomsPage() {
             </Button>
           </div>
 
-          <form onSubmit={handleCreateRoom} className="flex gap-4">
-            <Input
-              type="text"
-              placeholder="Enter whiteboard name"
-              value={newRoomName}
-              onChange={(e) => setNewRoomName(e.target.value)}
-              className={`w-64 rounded-xl border-2 transition-all focus:ring-2 ${theme === "rgb(24,24,27)" ? "bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-400" : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-200"}`}
-              required
-              minLength={3}
-              maxLength={20}
-            />
-            <Button 
-              type="submit"
-              disabled={creating}
-              className={`rounded-xl transform transition-all hover:scale-105 ${theme === "rgb(24,24,27)" ? "bg-indigo-600 hover:bg-indigo-500" : "bg-indigo-600 hover:bg-indigo-500"} text-white shadow-lg hover:shadow-xl`}
-            >
-              {creating ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <PlusCircle className="w-4 h-4 mr-2" />
+          <div className="flex flex-col gap-2">
+            {/* Room limit indicator */}
+            <div className={`text-sm text-right ${theme === "rgb(24,24,27)" ? "text-gray-300" : "text-gray-600"}`}>
+              <span className={`font-medium ${rooms.length >= MAX_ROOMS ? "text-red-500" : "text-green-500"}`}>
+                {rooms.length}/{MAX_ROOMS}
+              </span>{" "}
+              rooms used
+              {rooms.length >= MAX_ROOMS && (
+                <span className="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                  Limit reached
+                </span>
               )}
-              New Whiteboard
-            </Button>
-          </form>
+            </div>
+            
+            <form onSubmit={handleCreateRoom} className="flex gap-4">
+              <Input
+                type="text"
+                placeholder="Enter whiteboard name"
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                className={`w-64 rounded-xl border-2 transition-all focus:ring-2 ${theme === "rgb(24,24,27)" ? "bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-400" : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-200"}`}
+                required
+                minLength={3}
+                maxLength={20}
+                disabled={rooms.length >= MAX_ROOMS}
+              />
+              <Button 
+                type="submit"
+                disabled={creating || rooms.length >= MAX_ROOMS}
+                className={`rounded-xl transform transition-all hover:scale-105 ${
+                  rooms.length >= MAX_ROOMS 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : theme === "rgb(24,24,27)" 
+                      ? "bg-indigo-600 hover:bg-indigo-500" 
+                      : "bg-indigo-600 hover:bg-indigo-500"
+                } text-white shadow-lg hover:shadow-xl`}
+                title={rooms.length >= MAX_ROOMS ? "Room limit reached. Upgrade to premium for unlimited rooms." : ""}
+              >
+                {creating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                )}
+                {rooms.length >= MAX_ROOMS ? "Limit Reached" : "New Whiteboard"}
+              </Button>
+            </form>
+          </div>
         </div>
 
         <h2 className={`text-2xl font-bold mb-6 ${theme === "rgb(24,24,27)" ? "text-white" : "text-gray-900"}`}>
@@ -204,6 +233,28 @@ export default function RoomsPage() {
         )}
       </div>
       {/* Delete Confirmation Modal */}
+      {/* Premium upgrade section when limit reached */}
+      {rooms.length >= MAX_ROOMS && (
+        <div className={`mt-8 p-6 rounded-2xl backdrop-blur-sm border ${theme === "rgb(24,24,27)" ? "bg-amber-900/20 border-amber-800/50" : "bg-amber-50/80 border-amber-200"} shadow-lg`}>
+          <div className="text-center">
+            <h3 className={`text-lg font-semibold mb-2 ${theme === "rgb(24,24,27)" ? "text-amber-100" : "text-amber-900"}`}>
+              🚀 Upgrade to Premium
+            </h3>
+            <p className={`mb-4 ${theme === "rgb(24,24,27)" ? "text-amber-200" : "text-amber-800"}`}>
+              You've reached the free limit of {MAX_ROOMS} rooms. Upgrade to premium for unlimited rooms and exclusive features!
+            </p>
+            <Button 
+              onClick={() => {
+                toast.info('Premium features coming soon! 🎉');
+              }}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transform transition-all hover:scale-105"
+            >
+              Upgrade to Premium
+            </Button>
+          </div>
+        </div>
+      )}
+
       <ConfirmModal
         isOpen={deleteModalOpen}
         onClose={() => {

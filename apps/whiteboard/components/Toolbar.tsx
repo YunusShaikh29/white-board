@@ -9,6 +9,7 @@ import {
   Pencil,
   Square,
   SquareDashedMousePointer,
+  Trash2,
   TypeOutline,
 } from "lucide-react";
 import { IconButton } from "./IconButton";
@@ -17,11 +18,11 @@ import { Tool } from "@/util/type";
 export function Toolbar({
   selectedTool,
   setSelectedTool,
-  selectedColor,
-  setSelectedColor
+  onClearCanvas,
 }: {
   selectedTool: Tool;
   setSelectedTool: (s: Tool) => void;
+  onClearCanvas?: () => void;
 }) {
   return (
     <div className="fixed top-10 left-[50%] -translate-x-[50%] flex gap-4 items-center justify-center shadow-lg bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-90 rounded-lg px-4 py-2 text-xs font-mono">
@@ -32,7 +33,7 @@ export function Toolbar({
         activated={selectedTool === "point"}
         icon={<MousePointer2 size={20} />}
         className="hidden sm:inline-block"
-        title="Pointer"
+        title="Pointer (1)"
       />
 
       <IconButton
@@ -42,7 +43,7 @@ export function Toolbar({
         activated={selectedTool === "select"}
         icon={<SquareDashedMousePointer size={20} />}
         className="hidden sm:inline-block"
-        title="Select"
+        title="Select (S)"
       />
 
       <IconButton
@@ -51,7 +52,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "hand"}
         icon={<Hand size={20} />}
-        title="Grab"
+        title="Grab (H)"
       />
 
       <IconButton
@@ -60,7 +61,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "rect"}
         icon={<Square size={20} />}
-        title="Rectangle"
+        title="Rectangle (R)"
       />
 
       <IconButton
@@ -69,7 +70,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "rhombus"}
         icon={<Diamond size={20} />}
-        title="Rhombus"
+        title="Rhombus (D)"
       />
 
       <IconButton
@@ -78,7 +79,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "circle"}
         icon={<Circle size={20} />}
-        title="Circle"
+        title="Circle (C)"
       />
 
       <IconButton
@@ -87,7 +88,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "line"}
         icon={<Minus size={20} />}
-        title="Line"
+        title="Line (L)"
       />
 
       <IconButton
@@ -96,7 +97,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "arrow"}
         icon={<MoveRight size={20} />}
-        title="Arrow"
+        title="Arrow (A)"
       />
 
       <IconButton
@@ -105,7 +106,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "pencil"}
         icon={<Pencil size={20} />}
-        title="Pencil"
+        title="Pencil (P)"
       />
 
       <IconButton
@@ -114,7 +115,7 @@ export function Toolbar({
         }}
         activated={selectedTool === "erase"}
         icon={<Eraser size={20} />}
-        title="Erase"
+        title="Erase (E)"
       />
 
       <IconButton
@@ -124,7 +125,18 @@ export function Toolbar({
         activated={selectedTool === "text"}
         icon={<TypeOutline size={20} />}
         className="hidden sm:inline-block"
-        title="Text"
+        title="Text (T)"
+      />
+
+      {/* Separator */}
+      <div className="w-px h-6 bg-gray-300 mx-2" />
+
+      <IconButton
+        onClick={onClearCanvas}
+        activated={false}
+        icon={<Trash2 size={20} />}
+        title="Clear Canvas"
+        className="text-red-500 hover:text-red-600"
       />
     </div>
   );

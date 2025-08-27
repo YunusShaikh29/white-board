@@ -81,6 +81,8 @@ export type Color =
   | "#a6ffff"
   | "#ffffff";
 
+export type StrokeWidth = 1 | 2 | 3 | 4 | 5 | 6 | 8 | 10;
+
 export const colors: Color[] = [
   "#000000",
   "#7a7a7a", // Black

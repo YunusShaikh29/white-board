@@ -14,6 +14,26 @@ const users: User[] = [];
 
 const wss = new WebSocketServer({ port: 8081 });
 
+// Helper function to validate if a session is still active
+const validateSessionUser = async (userId: string): Promise<boolean> => {
+  if (!userId.startsWith("session_")) {
+    return true; // Token-based users are always valid once connected
+  }
+  
+  const sessionKey = userId.replace("session_", "");
+  try {
+    const session = await db.session.findUnique({
+      where: { sessionKey, isActive: true }
+    });
+    return !!session;
+  } catch (error) {
+    console.error("Session validation error:", error);
+    return false;
+  }
+};
+
+
+
 const checkUser = (token: string): string | null => {
   if (!token) {
     return null;
@@ -37,45 +57,105 @@ const checkUser = (token: string): string | null => {
   return null;
 };
 
-wss.on("connection", function connection(ws, request) {
+wss.on("connection", async function connection(ws, request) {
   const url = request.url;
   if (!url) {
-    ws.close();
+    ws.close(1008, "URL required");
     return;
   }
 
   const queryParams = new URLSearchParams(url.split("?")[1]);
+  const sessionKey = queryParams.get("sessionKey");
   const token = queryParams.get("token");
-  if (!token) {
-    ws.close();
+
+  // Option 1: Session-based connection (for shared sessions)
+  if (sessionKey) {
+    try {
+      // Validate session key
+      const session = await db.session.findUnique({
+        where: { sessionKey, isActive: true },
+        include: { room: true }
+      });
+
+      if (!session) {
+        ws.close(1008, "Invalid or inactive session");
+        return;
+      }
+
+      // Create user object for session-based connection
+      const user: User = {
+        userId: `session_${sessionKey}`, // Temporary user ID for session users
+        rooms: [session.roomId.toString()],
+        ws,
+      };
+
+      users.push(user);
+      console.log(`User joined via session: ${sessionKey} for room: ${session.roomId}`);
+
+    } catch (error) {
+      console.error("Session validation error:", error);
+      ws.close(1008, "Session validation failed");
+      return;
+    }
+  }
+  // Option 2: Token-based connection (for room owners)
+  else if (token) {
+    const userId = checkUser(token);
+
+    if (!userId) {
+      ws.close(1008, "Invalid token");
+      return;
+    }
+
+    const user: User = {
+      userId,
+      rooms: [],
+      ws,
+    };
+
+    users.push(user);
+    console.log(`Room owner connected: ${userId}`);
+  }
+  // Option 3: No valid auth
+  else {
+    ws.close(1008, "Session key or token required");
     return;
   }
-
-  const userId = checkUser(token);
-
-  if (!userId) {
-    ws.close();
-    return;
-  }
-
-  const user: User = {
-    userId,
-    rooms: [],
-    ws,
-  };
-
-  users.push(user);
 
   ws.on("message", async function message(data) {
     try {
       const parsedData = JSON.parse(data as unknown as string);
+
+      // Find the current user
+      const currentUser = users.find(user => user.ws === ws);
+      if (!currentUser) {
+        ws.close(1008, "User not found");
+        return;
+      }
+
+      // Validate session is still active for session-based users
+      const isValidSession = await validateSessionUser(currentUser.userId);
+      if (!isValidSession) {
+        console.log(`Session expired for user: ${currentUser.userId}`);
+        ws.close(1008, "Session has ended");
+        // Remove user from users array
+        const userIndex = users.indexOf(currentUser);
+        if (userIndex > -1) {
+          users.splice(userIndex, 1);
+        }
+        return;
+      }
 
       /* Joining the room */
       try {
         if (parsedData.MESSAGE_TYPE === "join_room") {
           const user = users.find((user) => user.ws === ws);
           if (user) {
-            user.rooms.push(parsedData.roomId);
+            // Only allow token-based users (room owners) to join rooms manually
+            // Session-based users are already joined to their specific room
+            if (!user.userId.startsWith("session_")) {
+              user.rooms.push(parsedData.roomId);
+            }
           }
         }
       } catch (e) {
@@ -161,6 +241,36 @@ wss.on("connection", function connection(ws, request) {
             console.error("Error deleting shapes from database:", error);
           }
         }
+
+        // Handle clear all canvas
+        if (parsedData.MESSAGE_TYPE === "clear_all") {
+          console.log("Clearing all shapes for room:", parsedData.roomId);
+          
+          // Delete all shapes from database for this room
+          try {
+            await db.shape.deleteMany({
+              where: { roomId: parsedData.roomId }
+            });
+            console.log("All shapes deleted from database for room:", parsedData.roomId);
+          } catch (error) {
+            console.error("Error deleting shapes from database:", error);
+          }
+          
+          // Broadcast clear_all event to all clients in the room
+          users.forEach(user => {
+            if (user.rooms.includes(parsedData.roomId)) {
+              try {
+                user.ws.send(JSON.stringify({
+                  MESSAGE_TYPE: "clear_all",
+                  roomId: parsedData.roomId,
+                }));
+              } catch (e) {
+                console.log("Error sending clear_all message:", e);
+              }
+            }
+          });
+        }
+
         if (parsedData.MESSAGE_TYPE === "shape") {
           // console.log("control reaching here")
           // console.log(parsedData.shape)
@@ -229,10 +339,15 @@ wss.on("connection", function connection(ws, request) {
           users.forEach((user) => {
             if (user.rooms.includes(roomId)) {
               try {
+                // Include tempId if it exists (for matching local shapes)
+                const shapeToSend = (parsedData.shape as any)._tempId 
+                  ? { ...newShape, _tempId: (parsedData.shape as any)._tempId }
+                  : newShape;
+                  
                 user.ws.send(
                   JSON.stringify({
                     MESSAGE_TYPE: "shape",
-                    shape: newShape,
+                    shape: shapeToSend,
                     roomId,
                   })
                 );
@@ -241,6 +356,64 @@ wss.on("connection", function connection(ws, request) {
               }
             }
           });
+        }
+        
+        // Handle shape updates (for resize/move operations)
+        if (parsedData.MESSAGE_TYPE === "update_shape") {
+          const shape = parsedData.shape;
+          const roomId = parsedData.roomId;
+          
+          if (!shape || !shape.id || !roomId) {
+            console.error("Invalid update_shape message:", parsedData);
+            return;
+          }
+          
+          try {
+            // Update the shape in the database
+            const updatedShape = await db.shape.update({
+              where: { id: shape.id },
+              data: {
+                x: shape.x,
+                y: shape.y,
+                width: shape.width,
+                height: shape.height,
+                centerX: shape.centerX,
+                centerY: shape.centerY,
+                radiusX: shape.radiusX,
+                radiusY: shape.radiusY,
+                x1: shape.x1,
+                y1: shape.y1,
+                x2: shape.x2,
+                y2: shape.y2,
+                fontSize: shape.fontSize,
+                content: shape.content,
+                points: shape.points ? JSON.stringify(shape.points) : null
+              }
+            });
+            
+            if (updatedShape) {
+              console.log("Shape updated:", updatedShape.id);
+              
+              // Broadcast the updated shape to all users in the room
+              users.forEach((user) => {
+                if (user.rooms.includes(roomId)) {
+                  try {
+                    user.ws.send(
+                      JSON.stringify({
+                        MESSAGE_TYPE: "shape_updated",
+                        shape: updatedShape,
+                        roomId,
+                      })
+                    );
+                  } catch (e) {
+                    console.log("Error sending shape update", e);
+                  }
+                }
+              });
+            }
+          } catch (error) {
+            console.error("Error updating shape:", error);
+          }
         }
       } catch (e) {
         console.log("Error creating and sending shape", e);

@@ -33,6 +33,20 @@ model Room {
   admin     User     @relation(fields: [adminId], references: [id])
   chats     Chat[]
   shapes    Shape[]
+
+  session Session?
+}
+
+model Session {
+  id        Int   @id @default(autoincrement())
+  sessionKey String   @unique
+  isActive   Boolean  @default(true)
+
+  roomId   Int        @unique
+  room     Room       @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Chat {

@@ -1,4 +1,4 @@
-import { Color, colors, Theme } from "@/util/type";
+import { Color, colors, StrokeWidth } from "@/util/type";
 import { useState } from "react";
 import { X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
@@ -6,12 +6,16 @@ import { useTheme } from "@/context/ThemeContext";
 interface SidebarProps {
   selectedColor: Color;
   setSelectedColor: (c: Color) => void;
+  selectedStrokeWidth: StrokeWidth;
+  setSelectedStrokeWidth: (w: StrokeWidth) => void;
   onClose: () => void;
 }
 
 export function Sidebar({
   selectedColor,
   setSelectedColor,
+  selectedStrokeWidth,
+  setSelectedStrokeWidth,
   onClose,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
@@ -79,6 +83,39 @@ export function Sidebar({
             </div>
           )}
         </div>
+        
+        {/* Stroke Width Control */}
+        <div>
+          <p className={`text-sm font-medium mb-3 ${
+            theme === "rgb(24,24,27)" ? "text-gray-300" : "text-gray-700"
+          }`}>Stroke Width</p>
+          <div className="grid grid-cols-4 gap-2">
+            {([1, 5, 10, 15, 20] as StrokeWidth[]).map((width) => (
+              <button
+                key={width}
+                onClick={() => setSelectedStrokeWidth(width)}
+                className={`h-8 rounded-md border transition-all ${
+                  selectedStrokeWidth === width
+                    ? theme === "rgb(24,24,27)"
+                      ? "border-indigo-400 bg-indigo-600/20"
+                      : "border-indigo-500 bg-indigo-50"
+                    : theme === "rgb(24,24,27)"
+                      ? "border-zinc-600 hover:border-zinc-500"
+                      : "border-gray-300 hover:border-gray-400"
+                }`}
+                title={`${width}px stroke`}
+              >
+                <div 
+                  className={`w-full rounded ${
+                    theme === "rgb(24,24,27)" ? "bg-gray-300" : "bg-gray-700"
+                  }`}
+                  style={{ height: `${Math.min(width, 4)}px` }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+        
         <div>
           <p className={`text-sm font-medium ${
             theme === "rgb(24,24,27)" ? "text-gray-300" : "text-gray-700"

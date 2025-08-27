@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -b",
-    "start": "tsx watch src/index.ts",
-    "dev": "pnpm run build && pnpm run start"
+    "dev": "tsx watch src/index.ts",
+    "start": "pnpm run build && node dist/index.js"
   },
   "type": "module",
   "dependencies": {
@@ -16,7 +16,8 @@
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.1.5"
   },
   "devDependencies": {
     "@repo/backend-common": "workspace:*",
