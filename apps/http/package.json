@@ -5,7 +5,9 @@
   "scripts": {
     "build": "tsc -b",
     "dev": "tsx watch src/index.ts",
-    "start": "pnpm run build && node dist/index.js"
+    "start": "node dist/index.js",
+    "start:prod": "NODE_ENV=production node dist/index.js",
+    "build:prod": "pnpm run build && pnpm run start:prod"
   },
   "type": "module",
   "dependencies": {

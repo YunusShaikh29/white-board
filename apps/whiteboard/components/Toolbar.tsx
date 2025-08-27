@@ -132,7 +132,7 @@ export function Toolbar({
       <div className="w-px h-6 bg-gray-300 mx-2" />
 
       <IconButton
-        onClick={onClearCanvas}
+        onClick={onClearCanvas || (() => {})}
         activated={false}
         icon={<Trash2 size={20} />}
         title="Clear Canvas"

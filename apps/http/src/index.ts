@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express, { json, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { middleware } from "./middleware.ts";
@@ -12,9 +12,66 @@ import { compare, hash } from "bcrypt";
 import cors from "cors";
 import { nanoid } from "nanoid";
 
+// Logger utility
+const logger = {
+  info: (message: string, meta?: any) => {
+    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, meta || '');
+  },
+  error: (message: string, error?: any) => {
+    console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, error || '');
+  },
+  warn: (message: string, meta?: any) => {
+    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, meta || '');
+  }
+};
+
 const app = express();
-app.use(express.json());
-app.use(cors());
+
+// Security middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-domain.vercel.app', 'https://your-custom-domain.com']
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Security headers
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// Request logging
+app.use((req: Request, res: Response, next: NextFunction) => {
+  logger.info(`${req.method} ${req.path}`, { 
+    ip: req.ip, 
+    userAgent: req.get('user-agent')
+  });
+  next();
+});
+
+// Global error handler
+app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+  logger.error('Unhandled error:', error);
+  res.status(500).json({
+    message: 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+  });
+});
+
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 //@ts-ignore
 app.post("/signup", async (req, res) => {
@@ -272,6 +329,7 @@ app.get("/shapes/:roomId", async (req, res) => {
   }
 });
 
+// @ts-ignore
 app.get("/rooms", middleware, async (req, res) => {
   try {
     const userId = req?.userId;
@@ -338,6 +396,7 @@ app.delete("/rooms/:roomId", middleware, async (req, res) => {
   }
 });
 
+// @ts-ignore
 app.delete("/shapes/:shapeId", middleware, async (req, res) => {
   try {
     const shapeId = Number(req.params.shapeId);
@@ -493,8 +552,8 @@ app.get("/api/session/join/:sessionKey", async (req, res) => {
 
     res.json({
       message: "Session is valid",
-      roomId: session.roomId,
-      roomName: session.room.slug,
+      roomId: session?.roomId,
+      roomName: session?.room.slug,
     });
   } catch (error) {
     console.error("Error validating session:", error);
@@ -539,6 +598,10 @@ app.get("/api/session/status/:roomId", middleware, async (req, res) => {
   }
 });
 
-app.listen(5050, () => {
-  console.log("http server listening");
+const PORT = process.env.PORT || 5050;
+
+app.listen(PORT, () => {
+  logger.info(`HTTP server listening on port ${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Health check available at: http://localhost:${PORT}/health`);
 });

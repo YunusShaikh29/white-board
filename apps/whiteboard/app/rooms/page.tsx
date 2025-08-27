@@ -39,7 +39,7 @@ export default function RoomsPage() {
       const fetchedRooms = await getRooms();
       setRooms(fetchedRooms);
     } catch (error) {
-      toast.error('Failed to fetch whiteboards');
+      toast.error('Failed to fetch whiteboards: ' + error);
     } finally {
       setLoading(false);
     }
@@ -241,7 +241,7 @@ export default function RoomsPage() {
               🚀 Upgrade to Premium
             </h3>
             <p className={`mb-4 ${theme === "rgb(24,24,27)" ? "text-amber-200" : "text-amber-800"}`}>
-              You've reached the free limit of {MAX_ROOMS} rooms. Upgrade to premium for unlimited rooms and exclusive features!
+              You have reached the free limit of {MAX_ROOMS} rooms. Upgrade to premium for unlimited rooms and exclusive features!
             </p>
             <Button 
               onClick={() => {

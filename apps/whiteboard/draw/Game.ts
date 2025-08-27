@@ -342,7 +342,7 @@ export class Game {
 
   // Get bounding box of a shape
   private getShapeBounds(shape: any) {
-    switch (shape.type) {
+    switch (shape?.type) {
       case "rect":
       case "rhombus":
         return {
@@ -553,7 +553,7 @@ export class Game {
     const newHeight = newMaxY - newMinY;
 
     // Apply changes based on shape type
-    switch (shape.type) {
+    switch (shape?.type) {
       case 'rect':
       case 'rhombus':
         shape.x = newMinX;
@@ -611,7 +611,7 @@ export class Game {
         
         if (localShapeIndex !== -1) {
           // Replace local shape with server shape
-          console.log("REPLACING LOCAL SHAPE WITH SERVER SHAPE:", data.shape.type, "TempID:", (data.shape as any)._tempId, "ServerID:", data.shape.id);
+          console.log("REPLACING LOCAL SHAPE WITH SERVER SHAPE:", data.shape?.type, "TempID:", (data.shape as any)._tempId, "ServerID:", data.shape.id);
           
           // Clean server shape (remove temp properties)
           const cleanServerShape = { ...data.shape };
@@ -626,7 +626,7 @@ export class Game {
           }
         } else {
           // This is a shape from another user (no tempId match)
-          console.log("ADDING SHAPE FROM OTHER USER:", data.shape.type, "ID:", data.shape.id);
+          console.log("ADDING SHAPE FROM OTHER USER:", data.shape?.type, "ID:", data.shape.id);
           
           // Clean the shape before adding
           const cleanShape = { ...data.shape };
@@ -716,7 +716,7 @@ export class Game {
           erasedShapeIds.push((shape as any).id);
         }
         erasedIndices.push(index);
-        console.log("ERASING SHAPE:", shape.type, "at index:", index);
+        console.log("ERASING SHAPE:", shape?.type, "at index:", index);
         return false; // Remove from local array
       }
       return true; // Keep in local array
@@ -752,7 +752,7 @@ export class Game {
 
   shapeIntersectsEraser(shape: any, x: number, y: number, radius: number) {
     // Rect
-    if (shape.type === "rect" || shape.type === "rhombus") {
+    if (shape?.type === "rect" || shape?.type === "rhombus") {
       return (
         x + radius > shape.x &&
         x - radius < shape.x + shape.width &&
@@ -761,25 +761,25 @@ export class Game {
       );
     }
     // Circle
-    if (shape.type === "circle") {
+    if (shape?.type === "circle") {
       const dx = x - shape.centerX;
       const dy = y - shape.centerY;
       return Math.sqrt(dx * dx + dy * dy) < (shape.radiusX || shape.radius) + radius;
     }
     // Line/Arrow
-    if (shape.type === "line" || shape.type === "arrow") {
+    if (shape?.type === "line" || shape?.type === "arrow") {
       const dist = this.pointToSegmentDistance(x, y, shape.x1, shape.y1, shape.x2, shape.y2);
       return dist < radius;
     }
     // Pencil
-    if (shape.type === "pencil") {
+    if (shape?.type === "pencil") {
       const points = this.getShapePoints(shape);
       if (points) {
         return points.some(pt => Math.hypot(pt.x - x, pt.y - y) < radius);
       }
     }
     // Text
-    if (shape.type === "text") {
+    if (shape?.type === "text") {
       return (
         x + radius > shape.x &&
         x - radius < shape.x + (shape.width || 50) &&
@@ -973,7 +973,7 @@ export class Game {
         this.theme === "rgb(24,24,27)" ? "#ffffff" : "#000000";
       this.ctx.lineWidth = this.strokeWidth;
 
-      switch (shape.type) {
+      switch (shape?.type) {
         case "rect":
           this.drawRect(shape);
           break;
@@ -1159,7 +1159,7 @@ export class Game {
       for (let i = this.existingShapes.length - 1; i >= 0; i--) {
         const shape = this.existingShapes[i];
         if (shape && this.shapeIntersectsPoint(shape, worldX, worldY)) {
-          console.log("FOUND SHAPE:", shape.type, "at index:", i, "with ID:", (shape as any)?.id);
+          console.log("FOUND SHAPE:", shape?.type, "at index:", i, "with ID:", (shape as any)?.id);
           this.selectedShapeIndex = i;  // Use array index instead of ID
           this.isMoving = true;
           this.moveStartX = worldX;
@@ -1343,21 +1343,21 @@ export class Game {
         
         if (this.selectedShapeIndex < this.existingShapes.length) {
           const shape = this.existingShapes[this.selectedShapeIndex];
-          console.log("MOVING SHAPE:", shape.type, "by dx:", dx, "dy:", dy);
+          console.log("MOVING SHAPE:", shape?.type, "by dx:", dx, "dy:", dy);
           
           // Update shape position based on type
-          if (shape.type === "rect" || shape.type === "rhombus" || shape.type === "text") {
+          if (shape?.type === "rect" || shape?.type === "rhombus" || shape?.type === "text") {
             (shape as any).x += dx;
             (shape as any).y += dy;
-          } else if (shape.type === "circle") {
+          } else if (shape?.type === "circle") {
             (shape as any).centerX += dx;
             (shape as any).centerY += dy;
-          } else if (shape.type === "line" || shape.type === "arrow") {
+          } else if (shape?.type === "line" || shape?.type === "arrow") {
             (shape as any).x1 += dx;
             (shape as any).y1 += dy;
             (shape as any).x2 += dx;
             (shape as any).y2 += dy;
-          } else if (shape.type === "pencil") {
+          } else if (shape?.type === "pencil") {
             (shape as any).points = (shape as any).points.map((pt: any) => ({ x: pt.x + dx, y: pt.y + dy }));
           }
           
@@ -1451,7 +1451,7 @@ export class Game {
       
       if (this.selectedShapeIndex !== -1 && this.selectedShapeIndex < this.existingShapes.length) {
         const shape = this.existingShapes[this.selectedShapeIndex];
-        console.log("FINISHED MOVING SHAPE:", shape.type);
+        console.log("FINISHED MOVING SHAPE:", shape?.type);
         
         this.saveToHistory(); // Save state after moving shape
         
@@ -1480,7 +1480,7 @@ export class Game {
       
       if (this.selectedShapeIndex !== -1 && this.selectedShapeIndex < this.existingShapes.length) {
         const shape = this.existingShapes[this.selectedShapeIndex];
-        console.log("FINISHED RESIZING SHAPE:", shape.type);
+        console.log("FINISHED RESIZING SHAPE:", shape?.type);
         
         this.saveToHistory(); // Save state after resizing shape
         

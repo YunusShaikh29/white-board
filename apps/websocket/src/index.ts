@@ -3,6 +3,20 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { db } from "@repo/db/index";
 import { shapeSchema } from "@repo/common/types";
+import http from 'http';
+
+// Logger utility
+const logger = {
+  info: (message: string, meta?: any) => {
+    console.log(`[WS-INFO] ${new Date().toISOString()} - ${message}`, meta || '');
+  },
+  error: (message: string, error?: any) => {
+    console.error(`[WS-ERROR] ${new Date().toISOString()} - ${message}`, error || '');
+  },
+  warn: (message: string, meta?: any) => {
+    console.warn(`[WS-WARN] ${new Date().toISOString()} - ${message}`, meta || '');
+  }
+};
 
 interface User {
   ws: WebSocket;
@@ -11,8 +25,28 @@ interface User {
 }
 
 const users: User[] = [];
+const PORT = process.env.PORT || 8081;
 
-const wss = new WebSocketServer({ port: 8081 });
+// Create HTTP server for health checks
+const server = http.createServer((req, res) => {
+  if (req.url === '/health' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      connections: users.length,
+      environment: process.env.NODE_ENV || 'development'
+    }));
+  } else {
+    res.writeHead(404);
+    res.end('Not Found');
+  }
+});
+
+const wss = new WebSocketServer({ 
+  server,
+  perMessageDeflate: false, // Disable compression for better performance
+});
 
 // Helper function to validate if a session is still active
 const validateSessionUser = async (userId: string): Promise<boolean> => {
@@ -90,10 +124,10 @@ wss.on("connection", async function connection(ws, request) {
       };
 
       users.push(user);
-      console.log(`User joined via session: ${sessionKey} for room: ${session.roomId}`);
+      logger.info(`User joined via session`, { sessionKey, roomId: session.roomId, totalUsers: users.length });
 
     } catch (error) {
-      console.error("Session validation error:", error);
+      logger.error("Session validation error:", error);
       ws.close(1008, "Session validation failed");
       return;
     }
@@ -114,7 +148,7 @@ wss.on("connection", async function connection(ws, request) {
     };
 
     users.push(user);
-    console.log(`Room owner connected: ${userId}`);
+    logger.info(`Room owner connected`, { userId, totalUsers: users.length });
   }
   // Option 3: No valid auth
   else {
@@ -136,7 +170,7 @@ wss.on("connection", async function connection(ws, request) {
       // Validate session is still active for session-based users
       const isValidSession = await validateSessionUser(currentUser.userId);
       if (!isValidSession) {
-        console.log(`Session expired for user: ${currentUser.userId}`);
+        logger.warn(`Session expired for user`, { userId: currentUser.userId });
         ws.close(1008, "Session has ended");
         // Remove user from users array
         const userIndex = users.indexOf(currentUser);
@@ -387,7 +421,7 @@ wss.on("connection", async function connection(ws, request) {
                 y2: shape.y2,
                 fontSize: shape.fontSize,
                 content: shape.content,
-                points: shape.points ? JSON.stringify(shape.points) : null
+                points: shape.points ? JSON.stringify(shape.points) : undefined
               }
             });
             
@@ -423,10 +457,23 @@ wss.on("connection", async function connection(ws, request) {
     }
   });
 
-  ws.on("close", () => {
+  ws.on("close", (code, reason) => {
+    logger.info(`WebSocket connection closed`, { code, reason: reason?.toString() });
     const userIndex = users.findIndex((user) => user.ws === ws);
     if (userIndex !== -1) {
       users.splice(userIndex, 1);
     }
   });
+
+  // Handle connection errors
+  ws.on('error', (error) => {
+    logger.error("WebSocket connection error:", error);
+  });
+});
+
+// Start the server
+server.listen(PORT, () => {
+  logger.info(`WebSocket server listening on port ${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Health check available at: http://localhost:${PORT}/health`);
 });
