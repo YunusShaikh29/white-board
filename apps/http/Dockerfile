@@ -17,7 +17,8 @@ RUN corepack enable pnpm && pnpm install --frozen-lockfile
 COPY . .
 
 # Generate Prisma client
-RUN cd packages/db && pnpm prisma generate
+# Generate Prisma client
+RUN pnpm prisma generate --schema=packages/db/prisma/schema.prisma
 
 # Build the HTTP server
 RUN cd apps/http && pnpm build
