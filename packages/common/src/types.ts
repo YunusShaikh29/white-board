@@ -137,7 +137,7 @@ export type Shape =
     }
   | {
       type: "pencil";
-      points: Point[];
+      points: { x: number; y: number }[];
       id?: number;
     }
   | {
