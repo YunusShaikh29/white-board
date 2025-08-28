@@ -1,4 +1,4 @@
-# HTTP API Dockerfile
+# HTTP API Dockerfile - Fixed for monorepo dependencies
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -9,7 +9,7 @@ COPY packages/db/package.json ./packages/db/
 COPY packages/common/package.json ./packages/common/
 COPY packages/backend-common/package.json ./packages/backend-common/
 COPY apps/http/package.json ./apps/http/
-COPY apps/http/tsconfig.json ./apps/http
+COPY apps/http/tsconfig.json ./apps/http/
 
 # Install dependencies
 RUN corepack enable pnpm && pnpm install --frozen-lockfile
@@ -31,14 +31,19 @@ WORKDIR /app
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copy built application, dependencies, and generated client
-COPY --from=builder /app/apps/http/dist ./dist
+# Copy the entire workspace to maintain dependency structure
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/apps/http/package.json ./package.json
+COPY --from=builder /app/apps/http ./apps/http
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+# Change ownership of the app directory
+RUN chown -R nodejs:nodejs /app
+
 USER nodejs
 
 # Expose port
@@ -48,5 +53,6 @@ EXPOSE 5050
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5050/health || exit 1
 
-# Start the server
+# Start the server from the correct directory
+WORKDIR /app/apps/http
 CMD ["node", "dist/index.js"]
