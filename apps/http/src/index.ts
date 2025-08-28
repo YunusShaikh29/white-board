@@ -15,61 +15,67 @@ import { nanoid } from "nanoid";
 // Logger utility
 const logger = {
   info: (message: string, meta?: any) => {
-    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, meta || '');
+    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, meta || "");
   },
   error: (message: string, error?: any) => {
-    console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, error || '');
+    console.error(
+      `[ERROR] ${new Date().toISOString()} - ${message}`,
+      error || ""
+    );
   },
   warn: (message: string, meta?: any) => {
-    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, meta || '');
-  }
+    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, meta || "");
+  },
 };
 
 const app = express();
 
 // Security middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-domain.vercel.app', 'https://your-custom-domain.com']
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(express.json({ limit: "10mb" }));
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? ["https://your-domain.vercel.app", "https://your-custom-domain.com"]
+        : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Security headers
 app.use((req: Request, res: Response, next: NextFunction) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
   next();
 });
 
 // Request logging
 app.use((req: Request, res: Response, next: NextFunction) => {
-  logger.info(`${req.method} ${req.path}`, { 
-    ip: req.ip, 
-    userAgent: req.get('user-agent')
+  logger.info(`${req.method} ${req.path}`, {
+    ip: req.ip,
+    userAgent: req.get("user-agent"),
   });
   next();
 });
 
 // Global error handler
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  logger.error('Unhandled error:', error);
+  logger.error("Unhandled error:", error);
   res.status(500).json({
-    message: 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    message: "Internal server error",
+    ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
   });
 });
 
 // Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
-  res.json({ 
-    status: 'healthy', 
+app.get("/health", (req: Request, res: Response) => {
+  res.json({
+    status: "healthy",
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || "development",
   });
 });
 
@@ -101,8 +107,8 @@ app.post("/signup", async (req, res) => {
 
     const user = await db.user.create({
       data: {
-        email,
-        name,
+        email: email!,
+        name: name!,
         password: hashedPassword,
       },
     });
@@ -144,7 +150,7 @@ app.post("/signin", async (req, res) => {
       });
     }
 
-    const isPasswordValid = await compare(password, user.password!);
+    const isPasswordValid = await compare(password!, user.password!);
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -214,7 +220,7 @@ app.post("/room", middleware, async (req, res) => {
 
     const room = await db.room.create({
       data: {
-        slug: name,
+        slug: name!,
         adminId: userId!,
       },
     });
@@ -531,6 +537,7 @@ app.get("/api/session/join/:sessionKey", async (req, res) => {
 
     if (!sessionKey) {
       res.status(400).json({ message: "Session key is required" });
+      return;
     }
 
     // Find active session with this key
@@ -548,12 +555,13 @@ app.get("/api/session/join/:sessionKey", async (req, res) => {
         message: "Session not found or has ended",
         code: "SESSION_INVALID",
       });
+      return
     }
 
     res.json({
       message: "Session is valid",
-      roomId: session?.roomId,
-      roomName: session?.room.slug,
+      roomId: session.roomId,
+      roomName: session.room.slug,
     });
   } catch (error) {
     console.error("Error validating session:", error);
@@ -602,6 +610,6 @@ const PORT = process.env.PORT || 5050;
 
 app.listen(PORT, () => {
   logger.info(`HTTP server listening on port ${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
   logger.info(`Health check available at: http://localhost:${PORT}/health`);
 });
