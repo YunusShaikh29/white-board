@@ -18,8 +18,8 @@ RUN corepack enable pnpm && pnpm install --frozen-lockfile
 COPY . .
 
 # Generate Prisma client
-# Generate Prisma client  
 RUN cd packages/db && npx prisma generate
+
 # Build the HTTP server
 RUN cd apps/http && pnpm build
 
@@ -31,11 +31,20 @@ WORKDIR /app
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copy built application
+# Copy package files and install production dependencies
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=builder /app/packages/db/package.json ./packages/db/
+COPY --from=builder /app/packages/common/package.json ./packages/common/
+COPY --from=builder /app/packages/backend-common/package.json ./packages/backend-common/
+COPY --from=builder /app/apps/http/package.json ./apps/http/
+COPY --from=builder /app/apps/http/tsconfig.json ./apps/http
+
+# Install production dependencies
+RUN corepack enable pnpm && pnpm install --frozen-lockfile --prod
+
+# Copy built application and generated client
 COPY --from=builder /app/apps/http/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/apps/http/package.json ./
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
