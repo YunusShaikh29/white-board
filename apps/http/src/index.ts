@@ -34,10 +34,10 @@ const app = express();
 app.use(express.json({ limit: "10mb" }));
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://your-domain.vercel.app", "https://your-custom-domain.com"]
-        : ["http://localhost:3000", "http://127.0.0.1:3000"],
+         origin:
+       process.env.NODE_ENV === "production"
+         ? ["https://white-board-whiteboard.vercel.app", "https://your-custom-domain.com"]
+         : ["http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

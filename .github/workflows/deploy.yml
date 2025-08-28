@@ -2,9 +2,10 @@ name: Deploy Excalidraw App
 
 on:
   push:
-    branches: [master, develop]
+    branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 env:
   NODE_VERSION: '20'
@@ -100,24 +101,11 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: apps/whiteboard
           vercel-args: '--prod'
+        env:
+          NEXT_PUBLIC_HTTP_BACKEND: ${{ secrets.NEXT_PUBLIC_HTTP_BACKEND }}
+          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
 
-  # Deploy HTTP API to Vercel
-  deploy-api:
-    runs-on: ubuntu-latest
-    needs: [test, migrate-db]
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Deploy API to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_API_PROJECT_ID }}
-          working-directory: apps/http
-          vercel-args: '--prod'
 
   # Deploy WebSocket to Railway
   deploy-websocket:
