@@ -23,10 +23,12 @@ RUN cd packages/db && npx prisma generate
 # Build workspace packages that need compilation
 RUN cd packages/common && npx tsc src/types.ts --outDir dist --target es2020 --module esnext --moduleResolution node --declaration
 RUN cd packages/backend-common && npx tsc src/index.ts --outDir dist --target es2020 --module esnext --moduleResolution node --declaration
+RUN cd packages/db && npx tsc src/index.ts --outDir dist --target es2020 --module esnext --moduleResolution node --declaration
 
 # Update package.json exports to point to compiled JS files for production
 RUN sed -i 's|"./types": "./src/types.ts"|"./types": "./dist/types.js"|g' packages/common/package.json
 RUN sed -i 's|"./config": "./src/index.ts"|"./config": "./dist/index.js"|g' packages/backend-common/package.json
+RUN sed -i 's|"./index": "./src/index.ts"|"./index": "./dist/index.js"|g' packages/db/package.json
 
 # Build the HTTP server
 RUN cd apps/http && pnpm build
