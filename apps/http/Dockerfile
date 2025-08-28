@@ -9,6 +9,7 @@ COPY packages/db/package.json ./packages/db/
 COPY packages/common/package.json ./packages/common/
 COPY packages/backend-common/package.json ./packages/backend-common/
 COPY apps/http/package.json ./apps/http/
+COPY apps/http/tsconfig.json ./apps/http
 
 # Install dependencies
 RUN corepack enable pnpm && pnpm install --frozen-lockfile
