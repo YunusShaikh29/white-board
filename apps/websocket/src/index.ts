@@ -26,6 +26,7 @@ interface User {
 
 const users: User[] = [];
 const PORT = process.env.PORT || 8081;
+const HTTP_URL = process.env.HTTP_URL || "http://localhost:5050"
 
 // Create HTTP server for health checks
 const server = http.createServer((req, res) => {
@@ -220,7 +221,7 @@ wss.on("connection", async function connection(ws, request) {
           if (!shapeId || !roomId) return;
           try {
             try {
-              const response = await require('axios').default.delete(`http://localhost:5050/shapes/${Number(shapeId)}`);
+              const response = await require('axios').default.delete(`${HTTP_URL}/shapes/${Number(shapeId)}`);
               console.log(`Shape ${shapeId} deleted from DB. Response:`, response.data);
             } catch (err) {
               console.error("Failed to delete shape from DB", (err as any)?.response?.data || err);
