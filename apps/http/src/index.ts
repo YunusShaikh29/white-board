@@ -1,7 +1,7 @@
 import express, { json, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
-import { middleware } from "./middleware.ts";
+import { middleware } from "./middleware.js";
 import {
   CreateUserSchema,
   SigninSchema,
