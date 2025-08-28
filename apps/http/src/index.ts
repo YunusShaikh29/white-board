@@ -91,7 +91,7 @@ app.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "Email already taken" });
     }
 
-    if (password.length < 8) {
+    if (!password || password.length < 8) {
       return res
         .status(400)
         .json({ message: "Password must be at least 8 characters long" });
@@ -144,7 +144,7 @@ app.post("/signin", async (req, res) => {
       });
     }
 
-    const isPasswordValid = await compare(password, user.password);
+    const isPasswordValid = await compare(password, user.password!);
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -190,7 +190,7 @@ app.post("/room", middleware, async (req, res) => {
     // Check room limit (5 rooms per user)
     const userRoomCount = await db.room.count({
       where: {
-        adminId: userId as string,
+        adminId: userId!,
       },
     });
 
@@ -215,7 +215,7 @@ app.post("/room", middleware, async (req, res) => {
     const room = await db.room.create({
       data: {
         slug: name,
-        adminId: userId as string,
+        adminId: userId!,
       },
     });
 
@@ -335,7 +335,7 @@ app.get("/rooms", middleware, async (req, res) => {
     const userId = req?.userId;
     const rooms = await db.room.findMany({
       where: {
-        adminId: userId as string,
+        adminId: userId!,
       },
       orderBy: {
         createdAt: "desc",
@@ -372,7 +372,7 @@ app.delete("/rooms/:roomId", middleware, async (req, res) => {
     const room = await db.room.findFirst({
       where: {
         id: roomId,
-        adminId: userId as string,
+        adminId: userId!,
       },
     });
 
@@ -445,7 +445,7 @@ app.post("/api/session/start", middleware, async (req, res) => {
     const room = await db.room.findFirst({
       where: {
         id: Number(roomId),
-        adminId: userId as string,
+        adminId: userId!,
       },
     });
 
@@ -498,7 +498,7 @@ app.post("/api/session/stop", middleware, async (req, res) => {
     const room = await db.room.findFirst({
       where: {
         id: Number(roomId),
-        adminId: userId as string,
+        adminId: userId!,
       },
     });
 
@@ -544,7 +544,7 @@ app.get("/api/session/join/:sessionKey", async (req, res) => {
     });
 
     if (!session || !session.isActive) {
-      res.status(404).json({
+       res.status(404).json({
         message: "Session not found or has ended",
         code: "SESSION_INVALID",
       });
@@ -572,7 +572,7 @@ app.get("/api/session/status/:roomId", middleware, async (req, res) => {
     const room = await db.room.findFirst({
       where: {
         id: roomId,
-        adminId: userId as string,
+        adminId: userId!,
       },
     });
 
