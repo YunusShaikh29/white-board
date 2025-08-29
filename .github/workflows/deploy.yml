@@ -116,9 +116,9 @@ jobs:
           NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
 
       - name: Deploy to Vercel
+        working-directory: apps/whiteboard
         run: |
           npm install -g vercel
-          cd apps/whiteboard
           vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -139,7 +139,8 @@ jobs:
 
       - name: Deploy HTTP API to Railway
         run: |
-          curl -fsSL https://railway.app/install.sh | sh
+          # Install Railway CLI using npm instead of curl
+          npm install -g @railway/cli
           railway login --token ${{ secrets.RAILWAY_TOKEN }}
           railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
         env:
@@ -156,7 +157,8 @@ jobs:
 
       - name: Deploy WebSocket to Railway
         run: |
-          curl -fsSL https://railway.app/install.sh | sh
+          # Install Railway CLI using npm instead of curl
+          npm install -g @railway/cli
           railway login --token ${{ secrets.RAILWAY_TOKEN }}
           railway up --service ${{ secrets.RAILWAY_WEBSOCKET_SERVICE_ID }}
         env:
