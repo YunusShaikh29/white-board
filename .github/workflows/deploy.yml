@@ -85,6 +85,8 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   # Deploy frontend to Vercel
+
+  # Deploy frontend to Vercel
   deploy-frontend:
     runs-on: ubuntu-latest
     needs: [test, migrate-db]
@@ -109,55 +111,49 @@ jobs:
       - name: Generate Prisma client
         run: cd packages/db && pnpm prisma generate
 
-      - name: Build frontend
-        run: cd apps/whiteboard && pnpm build
-        env:
-          NEXT_PUBLIC_HTTP_BACKEND: ${{ secrets.NEXT_PUBLIC_HTTP_BACKEND }}
-          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
-
-      - name: Deploy to Vercel
-        working-directory: apps/whiteboard
+      # Build & deploy via Vercel from repo root because Project Root Directory is already apps/whiteboard
+      - name: Deploy to Vercel (pull/build/deploy)
         run: |
           npm install -g vercel
-          vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+          vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token ${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_HTTP_BACKEND: ${{ secrets.NEXT_PUBLIC_HTTP_BACKEND }}
-          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
 
   # Deploy HTTP API to Railway
   deploy-http-api:
     runs-on: ubuntu-latest
     needs: [test, migrate-db]
     if: github.ref == 'refs/heads/master'
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Deploy HTTP API to Railway
+        working-directory: apps/http
         run: |
-          # Install Railway CLI using npm instead of curl
           npm install -g @railway/cli
-           ${{ secrets.RAILWAY_TOKEN }} railway login
-           ${{ secrets.RAILWAY_SERVICE_ID }} railway up
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          railway up --service "$RAILWAY_SERVICE_ID" --detach
 
   # Deploy WebSocket to Railway
   deploy-websocket:
     runs-on: ubuntu-latest
     needs: [test, migrate-db]
     if: github.ref == 'refs/heads/master'
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_WEBSOCKET_SERVICE_ID }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Deploy WebSocket to Railway
+        working-directory: apps/websocket
         run: |
-          # Install Railway CLI using npm instead of curl
           npm install -g @railway/cli
-          ${{ secrets.RAILWAY_TOKEN }} railway login
-          ${{ secrets.RAILWAY_WEBSOCKET_SERVICE_ID }} railway up
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          railway up --service "$RAILWAY_SERVICE_ID" --detach
