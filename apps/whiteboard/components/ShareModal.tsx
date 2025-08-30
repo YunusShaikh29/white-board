@@ -59,7 +59,7 @@ export function ShareModal({
     try {
       const token = localStorage.getItem("jwt_token");
       const response = await fetch(
-        "${NEXT_PUBLIC_HTTP_BACKEND}/api/session/start",
+        `${process.env.NEXT_PUBLIC_HTTP_BACKEND}/api/session/start`,
         {
           method: "POST",
           headers: {
@@ -98,7 +98,7 @@ export function ShareModal({
     try {
       const token = localStorage.getItem("jwt_token");
       const response = await fetch(
-        "${NEXT_PUBLIC_HTTP_BACKEND}/api/session/stop",
+        `${process.env.NEXT_PUBLIC_HTTP_BACKEND}/api/session/stop`,
         {
           method: "POST",
           headers: {
