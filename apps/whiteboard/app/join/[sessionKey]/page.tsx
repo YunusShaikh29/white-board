@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,7 +26,7 @@ export default function JoinSessionPage() {
 
   const validateAndJoinSession = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/api/session/join/${sessionKey}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HTTP_BACKEND}/api/session/join/${sessionKey}`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -97,7 +98,7 @@ export default function JoinSessionPage() {
               <strong>Room:</strong> {roomInfo.roomName}
             </p>
             <p className="text-green-600 text-sm mt-1">
-              You'll be connected to the live whiteboard in a moment...
+              You will be connected to the live whiteboard in a moment...
             </p>
           </div>
         )}
