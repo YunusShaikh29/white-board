@@ -14,7 +14,7 @@ export function ShareModal({
     hasActiveSession: boolean;
     sessionKey: string | null;
   }>({ hasActiveSession: false, sessionKey: null });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [copyButtonText, setCopyButtonText] = useState("Copy link");
@@ -36,12 +36,15 @@ export function ShareModal({
   const checkSessionStatus = async () => {
     try {
       const token = localStorage.getItem("jwt_token");
-      const response = await fetch(`http://localhost:5050/api/session/status/${roomId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_HTTP_BACKEND}/api/session/status/${roomId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
-      
+      );
+
       if (response.ok) {
         const data = await response.json();
         setSessionStatus(data);
@@ -55,25 +58,32 @@ export function ShareModal({
     setIsLoading(true);
     try {
       const token = localStorage.getItem("jwt_token");
-      const response = await fetch("http://localhost:5050/api/session/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ roomId })
-      });
+      const response = await fetch(
+        "${NEXT_PUBLIC_HTTP_BACKEND}/api/session/start",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ roomId }),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
         setSessionStatus({
           hasActiveSession: true,
-          sessionKey: data.sessionKey
+          sessionKey: data.sessionKey,
         });
       } else {
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
         console.error("Start session error:", response.status, errorData);
-        alert(`Failed to start session: ${errorData.message || response.statusText}`);
+        alert(
+          `Failed to start session: ${errorData.message || response.statusText}`
+        );
       }
     } catch (error) {
       console.error("Error starting session:", error);
@@ -87,19 +97,22 @@ export function ShareModal({
     setIsLoading(true);
     try {
       const token = localStorage.getItem("jwt_token");
-      const response = await fetch("http://localhost:5050/api/session/stop", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ roomId })
-      });
+      const response = await fetch(
+        "${NEXT_PUBLIC_HTTP_BACKEND}/api/session/stop",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ roomId }),
+        }
+      );
 
       if (response.ok) {
         setSessionStatus({
           hasActiveSession: false,
-          sessionKey: null
+          sessionKey: null,
         });
         setShareUrl("");
       } else {
@@ -136,13 +149,16 @@ export function ShareModal({
         >
           <X size={24} />
         </button>
-        
-        <h2 className="text-2xl font-bold mb-2 text-gray-800">Live Collaboration</h2>
-        
+
+        <h2 className="text-2xl font-bold mb-2 text-gray-800">
+          Live Collaboration
+        </h2>
+
         {!sessionStatus.hasActiveSession ? (
           <div className="text-center">
             <p className="text-gray-600 mb-6">
-              Start a live collaboration session to invite people to work on your drawing in real-time.
+              Start a live collaboration session to invite people to work on
+              your drawing in real-time.
             </p>
             <button
               onClick={startSession}
@@ -158,7 +174,9 @@ export function ShareModal({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-600 font-medium">Session Active</span>
+                <span className="text-green-600 font-medium">
+                  Session Active
+                </span>
               </div>
               <button
                 onClick={stopSession}
@@ -169,11 +187,12 @@ export function ShareModal({
                 {isLoading ? "Stopping..." : "Stop Session"}
               </button>
             </div>
-            
+
             <p className="text-gray-600 mb-4">
-              Share this link with collaborators. Anyone with the link can view and edit this whiteboard.
+              Share this link with collaborators. Anyone with the link can view
+              and edit this whiteboard.
             </p>
-            
+
             <div className="flex items-center space-x-2 mb-4">
               <input
                 type="text"
@@ -189,17 +208,19 @@ export function ShareModal({
                 {copyButtonText}
               </button>
             </div>
-            
+
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <ExternalLink size={14} />
               <span>Link will expire when session is stopped</span>
             </div>
           </div>
         )}
-        
+
         <div className="mt-6 p-3 bg-blue-50 rounded-lg">
           <p className="text-xs text-blue-700">
-            <strong>💡 Tip:</strong> Only you can start/stop sessions for your rooms. Collaborators will automatically be disconnected when you stop the session.
+            <strong>💡 Tip:</strong> Only you can start/stop sessions for your
+            rooms. Collaborators will automatically be disconnected when you
+            stop the session.
           </p>
         </div>
       </div>

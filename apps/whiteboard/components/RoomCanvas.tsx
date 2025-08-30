@@ -16,18 +16,14 @@ export default function RoomCanvas({ roomId }: { roomId: number }) {
     const sessionKey = searchParams.get('sessionKey');
     let cleanup: (() => void) | undefined;
     
-    // Determine connection type and setup WebSocket accordingly
     if (sessionKey) {
-      // Session-based connection (for collaborators joining via link)
       setConnectionType('session');
       cleanup = setupSessionConnection(sessionKey);
     } else {
-      // Token-based connection (for room owners)
       setConnectionType('owner');
       cleanup = setupOwnerConnection();
     }
 
-    // Return cleanup function for useEffect
     return cleanup;
   }, [roomId, searchParams]);
 
@@ -55,7 +51,7 @@ export default function RoomCanvas({ roomId }: { roomId: number }) {
 
   const setupWebSocketHandlers = (ws: WebSocket, type: 'owner' | 'session') => {
     ws.onopen = () => {
-      console.log(`WebSocket connected as ${type}`);
+      // console.log(`WebSocket connected as ${type}`);
       setSocket(ws);
       
       // Only send join_room for owner connections
@@ -85,7 +81,6 @@ export default function RoomCanvas({ roomId }: { roomId: number }) {
       }
     };
 
-    // Cleanup function
     const cleanup = () => {
       if (ws.readyState === WebSocket.OPEN) {
         if (type === 'owner') {
@@ -100,7 +95,6 @@ export default function RoomCanvas({ roomId }: { roomId: number }) {
       }
     };
 
-    // Return cleanup function for useEffect
     return cleanup;
   };
 

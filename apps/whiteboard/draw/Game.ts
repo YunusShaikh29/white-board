@@ -124,7 +124,7 @@ export class Game {
       this.historyIndex++;
     }
     
-    console.log("HISTORY SAVED - Index:", this.historyIndex, "Total:", this.history.length);
+    // console.log("HISTORY SAVED - Index:", this.historyIndex, "Total:", this.history.length);
   }
   
   // Undo last action
@@ -134,10 +134,10 @@ export class Game {
       this.existingShapes = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
       this.selectedShapeIndex = -1; // Clear selection
       this.clearCanvas();
-      console.log("UNDO - Index:", this.historyIndex);
+      // console.log("UNDO - Index:", this.historyIndex);
       return true;
     }
-    console.log("UNDO - No more history");
+    // console.log("UNDO - No more history");
     return false;
   }
   
@@ -148,10 +148,10 @@ export class Game {
       this.existingShapes = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
       this.selectedShapeIndex = -1; // Clear selection
       this.clearCanvas();
-      console.log("REDO - Index:", this.historyIndex);
+      // console.log("REDO - Index:", this.historyIndex);
       return true;
     }
-    console.log("REDO - No more future history");
+    // console.log("REDO - No more future history");
     return false;
   }
   
@@ -167,7 +167,7 @@ export class Game {
 
   // Clear all shapes from canvas
   public clearAllShapes(): void {
-    console.log("CLEARING ALL SHAPES");
+    // console.log("CLEARING ALL SHAPES");
     this.existingShapes = [];
     this.selectedShapeIndex = -1;
     this.saveToHistory();
@@ -193,7 +193,7 @@ export class Game {
     }
 
     const shapeToDelete = this.existingShapes[this.selectedShapeIndex];
-    console.log("DELETING SELECTED SHAPE:", shapeToDelete?.type, "Index:", this.selectedShapeIndex);
+    // console.log("DELETING SELECTED SHAPE:", shapeToDelete?.type, "Index:", this.selectedShapeIndex);
 
     // Remove from local array
     this.existingShapes.splice(this.selectedShapeIndex, 1);
@@ -230,7 +230,7 @@ export class Game {
     }
 
     const originalShape = this.existingShapes[this.selectedShapeIndex];
-    console.log("DUPLICATING SELECTED SHAPE:", originalShape?.type, "Index:", this.selectedShapeIndex);
+    // console.log("DUPLICATING SELECTED SHAPE:", originalShape?.type, "Index:", this.selectedShapeIndex);
 
     // Create a deep copy of the shape
     const duplicatedShape = JSON.parse(JSON.stringify(originalShape));
@@ -611,7 +611,7 @@ export class Game {
         
         if (localShapeIndex !== -1) {
           // Replace local shape with server shape
-          console.log("REPLACING LOCAL SHAPE WITH SERVER SHAPE:", data.shape?.type, "TempID:", (data.shape as any)._tempId, "ServerID:", data.shape.id);
+          // console.log("REPLACING LOCAL SHAPE WITH SERVER SHAPE:", data.shape?.type, "TempID:", (data.shape as any)._tempId, "ServerID:", data.shape.id);
           
           // Clean server shape (remove temp properties)
           const cleanServerShape = { ...data.shape };
@@ -626,7 +626,7 @@ export class Game {
           }
         } else {
           // This is a shape from another user (no tempId match)
-          console.log("ADDING SHAPE FROM OTHER USER:", data.shape?.type, "ID:", data.shape.id);
+          // console.log("ADDING SHAPE FROM OTHER USER:", data.shape?.type, "ID:", data.shape.id);
           
           // Clean the shape before adding
           const cleanShape = { ...data.shape };
@@ -646,7 +646,7 @@ export class Game {
 
       // Handle clear all message
       if (data.MESSAGE_TYPE === "clear_all") {
-        console.log("RECEIVED CLEAR_ALL MESSAGE");
+        // console.log("RECEIVED CLEAR_ALL MESSAGE");
         this.existingShapes = [];
         this.selectedShapeIndex = -1;
         this.saveToHistory();
@@ -662,7 +662,7 @@ export class Game {
         
         if (shapeIndex !== -1) {
           // Update the existing shape
-          console.log("UPDATING EXISTING SHAPE:", updatedShape.type, "ID:", updatedShape.id);
+          // console.log("UPDATING EXISTING SHAPE:", updatedShape.type, "ID:", updatedShape.id);
           this.existingShapes[shapeIndex] = updatedShape;
           
           // Update selectedShapeIndex if it was pointing to the updated shape
@@ -678,7 +678,7 @@ export class Game {
 
   // Update setTool to reset states and cursor
   setTool(tool: Tool) {
-    console.log("SWITCHING TO TOOL:", tool);
+    // console.log("SWITCHING TO TOOL:", tool);
     this.selectedShape = tool;
     this.isPanning = false;
     this.isMoving = false;
@@ -716,7 +716,7 @@ export class Game {
           erasedShapeIds.push((shape as any).id);
         }
         erasedIndices.push(index);
-        console.log("ERASING SHAPE:", shape?.type, "at index:", index);
+        // console.log("ERASING SHAPE:", shape?.type, "at index:", index);
         return false; // Remove from local array
       }
       return true; // Keep in local array
@@ -1043,7 +1043,7 @@ export class Game {
       this.eraseAt(e.offsetX, e.offsetY);
       return;
     }
-    console.log("control reached here, mouse_DOWN");
+    // console.log("control reached here, mouse_DOWN");
     this.drawing = true;
     this.startX = (e.offsetX - this.offsetX) / this.zoom;
     this.startY = (e.offsetY - this.offsetY) / this.zoom;
@@ -1081,7 +1081,7 @@ export class Game {
       input.focus();
 
       input.addEventListener("blur", () => {
-        console.log(input.value);
+        // console.log(input.value);
         const content = input.value;
 
         if (content.trim().length !== 0 || content.trim() !== "") {
@@ -1135,8 +1135,8 @@ export class Game {
       const worldX = (e.offsetX - this.offsetX) / this.zoom;
       const worldY = (e.offsetY - this.offsetY) / this.zoom;
       
-      console.log("SELECT MODE: Clicking at world coords", worldX, worldY);
-      console.log("Available shapes:", this.existingShapes.length);
+      // console.log("SELECT MODE: Clicking at world coords", worldX, worldY);
+      // console.log("Available shapes:", this.existingShapes.length);
       
       // First check if clicking on a resize handle of selected shape
       if (this.selectedShapeIndex !== -1 && this.selectedShapeIndex < this.existingShapes.length) {
@@ -1144,7 +1144,7 @@ export class Game {
         const handle = this.getResizeHandle(selectedShape, worldX, worldY);
         
         if (handle) {
-          console.log("STARTING RESIZE with handle:", handle);
+          // console.log("STARTING RESIZE with handle:", handle);
           this.isResizing = true;
           this.resizeHandle = handle;
           this.resizeStartX = worldX;
@@ -1159,7 +1159,7 @@ export class Game {
       for (let i = this.existingShapes.length - 1; i >= 0; i--) {
         const shape = this.existingShapes[i];
         if (shape && this.shapeIntersectsPoint(shape, worldX, worldY)) {
-          console.log("FOUND SHAPE:", shape?.type, "at index:", i, "with ID:", (shape as any)?.id);
+          // console.log("FOUND SHAPE:", shape?.type, "at index:", i, "with ID:", (shape as any)?.id);
           this.selectedShapeIndex = i;  // Use array index instead of ID
           this.isMoving = true;
           this.moveStartX = worldX;
@@ -1170,13 +1170,13 @@ export class Game {
         }
       }
       // Deselect if no shape hit
-      console.log("NO SHAPE FOUND - Deselecting");
+      // console.log("NO SHAPE FOUND - Deselecting");
       this.selectedShapeIndex = -1;
       this.clearCanvas(); // Redraw to remove highlight
       return;
     }
 
-    console.log(this.drawing);
+    // console.log(this.drawing);
   };
 
   mouseMoveHandler = (e: MouseEvent) => {
@@ -1186,7 +1186,7 @@ export class Game {
     }
     // console.log(this.drawing)
     if (this.drawing) {
-      console.log("control reached here | mouse_MOVE", this.drawing);
+      // console.log("control reached here | mouse_MOVE", this.drawing);
 
       const currentX = (e.offsetX - this.offsetX) / this.zoom;
       const currentY = (e.offsetY - this.offsetY) / this.zoom;
@@ -1343,7 +1343,7 @@ export class Game {
         
         if (this.selectedShapeIndex < this.existingShapes.length) {
           const shape = this.existingShapes[this.selectedShapeIndex];
-          console.log("MOVING SHAPE:", shape?.type, "by dx:", dx, "dy:", dy);
+          // console.log("MOVING SHAPE:", shape?.type, "by dx:", dx, "dy:", dy);
           
           // Update shape position based on type
           if (shape?.type === "rect" || shape?.type === "rhombus" || shape?.type === "text") {
@@ -1376,7 +1376,7 @@ export class Game {
         const deltaX = worldX - this.resizeStartX;
         const deltaY = worldY - this.resizeStartY;
         
-        console.log("RESIZING:", this.resizeHandle, "Delta:", deltaX, deltaY);
+        // console.log("RESIZING:", this.resizeHandle, "Delta:", deltaX, deltaY);
         
         if (this.selectedShapeIndex < this.existingShapes.length) {
           const shape = this.existingShapes[this.selectedShapeIndex];
@@ -1420,10 +1420,10 @@ export class Game {
       this.drawing = false;
       return;
     }
-    console.log("control reached here | mouse_UP");
+    // console.log("control reached here | mouse_UP");
     // console.log(this.drawing)
     this.drawing = false;
-    console.log(this.tempShape);
+    // console.log(this.tempShape);
     if (this.tempShape) {
       // Add locally with temporary flag and unique ID
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1432,7 +1432,7 @@ export class Game {
       this.saveToHistory(); // Save state after adding shape
       this.clearCanvas();
       
-      console.log("SENDING SHAPE TO SERVER:", this.tempShape.type, "TempID:", tempId);
+      // console.log("SENDING SHAPE TO SERVER:", this.tempShape.type, "TempID:", tempId);
       
       // Add tempId to the message so server can send it back
       const shapeToSend = { ...this.tempShape, _tempId: tempId };
@@ -1451,7 +1451,7 @@ export class Game {
       
       if (this.selectedShapeIndex !== -1 && this.selectedShapeIndex < this.existingShapes.length) {
         const shape = this.existingShapes[this.selectedShapeIndex];
-        console.log("FINISHED MOVING SHAPE:", shape?.type);
+        // console.log("FINISHED MOVING SHAPE:", shape?.type);
         
         this.saveToHistory(); // Save state after moving shape
         
@@ -1466,7 +1466,7 @@ export class Game {
             })
           );
         } else {
-          console.log("Local shape moved - will sync when saved to server");
+          // console.log("Local shape moved - will sync when saved to server");
         }
       }
       return;
@@ -1480,7 +1480,7 @@ export class Game {
       
       if (this.selectedShapeIndex !== -1 && this.selectedShapeIndex < this.existingShapes.length) {
         const shape = this.existingShapes[this.selectedShapeIndex];
-        console.log("FINISHED RESIZING SHAPE:", shape?.type);
+        // console.log("FINISHED RESIZING SHAPE:", shape?.type);
         
         this.saveToHistory(); // Save state after resizing shape
         
@@ -1494,7 +1494,7 @@ export class Game {
             })
           );
         } else {
-          console.log("Local shape resized - will sync when saved to server");
+          // console.log("Local shape resized - will sync when saved to server");
         }
       }
       return;
@@ -1610,7 +1610,7 @@ export class Game {
           if (this.onToolChange) {
             this.onToolChange(newTool);
           }
-          console.log("SWITCHED TO TOOL:", newTool, "via keyboard shortcut:", key);
+          // console.log("SWITCHED TO TOOL:", newTool, "via keyboard shortcut:", key);
           return;
         }
       }
@@ -1632,25 +1632,25 @@ export class Game {
     if (shape?.type === "rect" || shape?.type === "rhombus") {
       result = x >= (shape.x ?? 0) - padding && x <= (shape.x ?? 0) + (shape.width ?? 0) + padding &&
                y >= (shape.y ?? 0) - padding && y <= (shape.y ?? 0) + (shape.height ?? 0) + padding;
-      if (result) console.log("Hit rect/rhombus at", shape.x, shape.y, "size", shape.width, "x", shape.height);
+      // if (result) console.log("Hit rect/rhombus at", shape.x, shape.y, "size", shape.width, "x", shape.height);
     } else if (shape?.type === "circle") {
       const dx = x - (shape.centerX ?? 0);
       const dy = y - (shape.centerY ?? 0);
       result = Math.sqrt(dx * dx + dy * dy) <= Math.max(shape.radiusX ?? 0, shape.radiusY ?? 0) + padding;
-      if (result) console.log("Hit circle at", shape.centerX, shape.centerY);
+      // if (result) console.log("Hit circle at", shape.centerX, shape.centerY);
     } else if (shape?.type === "line" || shape?.type === "arrow") {
       result = this.pointToSegmentDistance(x, y, shape.x1 ?? 0, shape.y1 ?? 0, shape.x2 ?? 0, shape.y2 ?? 0) < padding;
-      if (result) console.log("Hit line/arrow");
+      // if (result) console.log("Hit line/arrow");
     } else if (shape?.type === "pencil") {
       const points = this.getShapePoints(shape);
       if (points) {
         result = points.some(pt => Math.hypot((pt?.x ?? 0) - x, (pt?.y ?? 0) - y) < padding);
-        if (result) console.log("Hit pencil drawing");
+        // if (result) console.log("Hit pencil drawing");
       }
     } else if (shape?.type === "text") {
       result = x >= (shape.x ?? 0) - padding && x <= (shape.x ?? 0) + 100 + padding &&
                y >= (shape.y ?? 0) - (shape.fontSize ?? 0) - padding && y <= (shape.y ?? 0) + padding;
-      if (result) console.log("Hit text at", shape.x, shape.y);
+      // if (result) console.log("Hit text at", shape.x, shape.y);
     }
     
     return result;
